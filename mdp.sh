@@ -22,9 +22,9 @@ option=$4
 module load samtools bwa pairtools preseq juicer
 mkdir temp/${sample_ID}
 
-trim_galore -j 4 --fastqc_args "--outdir fastqc" --paired fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
 if [option == "qc"]
 then
+  trim_galore -j 4 --fastqc_args "--outdir fastqc" --paired fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
 fi
 
 #alignment -t is thread number, 30min
