@@ -23,6 +23,9 @@ module load samtools bwa pairtools preseq juicer
 mkdir temp/${sample_ID}
 
 trim_galore -j 4 --fastqc_args "--outdir fastqc" --paired fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
+if [option == "qc"]
+then
+fi
 
 #alignment -t is thread number, 30min
 bwa mem -5SP -T0 -t64 ${genome}.fa \
