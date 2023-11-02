@@ -17,8 +17,8 @@ genome=$3
 module load fastqc trimgalore samtools bwa pairtools preseq juicer
 mkdir temp temp/${sample_ID} BAM fastqc hic pairs stats
 
-fastqc -t 6 -o fastqc/ fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
-trim_galore -j 4 --paired fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
+fastqc -t 6 -o fastqc/ fastq/${sample_ID}_R1_001.fastq.gz fastq/${sample_ID}_R2_001.fastq.gz
+trim_galore -j 4 --paired fastq/${sample_ID}_R1_001.fastq.gz fastq/${sample_ID}_R2_001.fastq.gz
 
 #alignment -t is thread number, 30min
 bwa mem -5SP -T0 -t64 ${genome} \
