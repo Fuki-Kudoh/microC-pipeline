@@ -8,23 +8,22 @@ option=$4
 
 ##############################
 #This is for alignment.
-#sbatch --time=24:00:00 --cpus-per-task=64 --mem=64g microC.sh <sample_ID> <genome> <genome location> [option]
+#sbatch --time=24:00:00 --cpus-per-task=64 --mem=64g mdp.sh <sample_ID> <genome> <genome location> [option]
 #directory-+-fastq--+--{sample_ID}_R1_001.fastq.gz
 #          |        +--{sample_ID}_R2_001.fastq.gz
-#          +-BAM
-#          +-fastqc
-#          +-hic
-#          +-pairs
-#          +-stats
-#          +-temp
+#          +-get_qc.py
+#          +-mdp.sh
 ##############################
 
 module load samtools bwa pairtools preseq juicer
-mkdir temp/${sample_ID}
+mkdir temp temp/${sample_ID} BAM fastqc hic pairs stats temp
 
 if [option == "qc"]
 then
-  trim_galore -j 4 --fastqc_args "--outdir fastqc" --paired fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
+  mkdir fastqc
+  module load fastqc trimgalore
+  fastqc -t 6 -o fastqc/ fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
+  trim_galore -j 4 --paired fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
 fi
 
 #alignment -t is thread number, 30min
@@ -47,8 +46,8 @@ pairtools dedup --nproc-in 64 --nproc-out 64 --mark-dups --output-stats stats/${
 --output temp/${sample_ID}/${sample_ID}.dedup.pairsam temp/${sample_ID}/${sample_ID}.sorted.pairsam
 rm temp/${sample_ID}/${sample_ID}.sorted.pairsam
 #check stats
-#wget https://github.com/dovetail-genomics/Micro-C/blob/973c67ae2be329ded96007cddeec39667f60698e/get_qc.py
-#python3 get_qc.py -p stats/${sample_ID}.txt > stats/qc_${sample_ID}.txt
+touch stats/qc_${sample_ID}.txt
+python3 get_qc.py -p stats/${sample_ID}.txt > stats/qc_${sample_ID}.txt
 
 #split 10 min
 pairtools split --nproc-in 64 --nproc-out 64 --output-pairs pairs/${sample_ID}.pairs \
@@ -64,16 +63,7 @@ preseq lc_extrap -bam -pe -extrap 2.1e9 -step 1e8 -seg_len 1000000000 \
 #.hic contact map
 juicer_tools pre -j 64 pairs/${sample_ID}.pairs hic/${sample_ID}.hic ${genome_name}
 
-#cooltools
-#module load cooltools
-#bgzip pairs/${sample_ID}.pairs
-#pairtools sort --nproc 64 -o pairs/${sample_ID}.sorted.pairs.gz pairs/${sample_ID}.pairs.gz
-#rm pairs/${sample_ID}.pairs
-#cooler cload pairix -p 64 ${genome}:1000 pairs/${sample_ID}.sorted.pairs.gz cooler/${sample_ID}.cool
-
 #######################
 # Version history and updating schedule
 # v1.0 2023/11/01 From fastq to hic without qc
-# v1.1 TBD        add Galore and fastqc
-# v1.2 TBD        add quality check
-# v1.3
+# v1.1 2023/11/02 add fastqc, galore, quality check
