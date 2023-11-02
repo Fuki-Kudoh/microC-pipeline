@@ -4,30 +4,24 @@ echo ${date}
 sample_ID=$1
 genome_name=$2
 genome=$3
-option=$4
 
 ##############################
 #This is for alignment.
-#sbatch --time=24:00:00 --cpus-per-task=64 --mem=64g mdp.sh <sample_ID> <genome> <genome location> [option]
+#sbatch --time=24:00:00 --cpus-per-task=64 --mem=64g mdp.sh <sample_ID> <genome> <genome location>
 #directory-+-fastq--+--{sample_ID}_R1_001.fastq.gz
 #          |        +--{sample_ID}_R2_001.fastq.gz
 #          +-get_qc.py
 #          +-mdp.sh
 ##############################
 
-module load samtools bwa pairtools preseq juicer
-mkdir temp temp/${sample_ID} BAM fastqc hic pairs stats temp
+module load fastqc trimgalore samtools bwa pairtools preseq juicer
+mkdir temp temp/${sample_ID} BAM fastqc hic pairs stats
 
-if [option == "qc"]
-then
-  mkdir fastqc
-  module load fastqc trimgalore
-  fastqc -t 6 -o fastqc/ fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
-  trim_galore -j 4 --paired fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
-fi
+fastqc -t 6 -o fastqc/ fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
+trim_galore -j 4 --paired fastq/${sample_ID}_R1.001.fastq.gz fastq/${sample_ID}_R2.001.fastq.gz
 
 #alignment -t is thread number, 30min
-bwa mem -5SP -T0 -t64 ${genome}.fa \
+bwa mem -5SP -T0 -t64 ${genome} \
 fastq/${sample_ID}_R1_001.fastq.gz fastq/${sample_ID}_R2_001.fastq.gz \
 -o temp/${sample_ID}/${sample_ID}.sam
 
