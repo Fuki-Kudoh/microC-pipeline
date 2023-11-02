@@ -27,7 +27,7 @@ fastq/${sample_ID}_R1_001_val_1.fq.gz fastq/${sample_ID}_R2_001_val_2.fq.gz \
 
 #parse --nproc-in and --nproc-out is thread number, 1.5h
 pairtools parse --min-mapq 40 --walks-policy 5unique --max-inter-align-gap 30 \
---nproc-in 64 --nproc-out 64 --chroms-path ${genome}.fa \
+--nproc-in 64 --nproc-out 64 --chroms-path ${genome} \
 temp/${sample_ID}/${sample_ID}.sam > temp/${sample_ID}/${sample_ID}.pairsam
 #sort --nproc is thread number. 40 min
 rm temp/${sample_ID}/${sample_ID}.sam
