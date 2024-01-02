@@ -30,7 +30,6 @@ pairtools parse --min-mapq 40 --walks-policy 5unique --max-inter-align-gap 30 \
 --nproc-in 64 --nproc-out 64 --chroms-path ${genome} \
 temp/${sample_ID}/${sample_ID}.sam > temp/${sample_ID}/${sample_ID}.pairsam
 #sort --nproc is thread number. 40 min
-rm temp/${sample_ID}/${sample_ID}.sam
 
 pairtools sort --nproc 64 --tmpdir=temp/${sample_ID} temp/${sample_ID}/${sample_ID}.pairsam \
 > temp/${sample_ID}/${sample_ID}.sorted.pairsam
