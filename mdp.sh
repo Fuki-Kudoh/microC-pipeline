@@ -13,6 +13,14 @@ genome=$3
 #          +-get_qc.py
 #          +-mdp.sh
 ##############################
+error_handling() {
+    echo "Error occurred in command: '$BASH_COMMAND' at line: $1"
+    exit 1
+}
+
+trap 'error_handling $LINENO' ERR
+
+##############################
 
 module load fastqc trimgalore samtools bwa pairtools preseq juicer
 mkdir temp temp/${sample_ID} BAM fastqc hic pairs stats
@@ -60,3 +68,4 @@ juicer_tools pre -j 64 pairs/${sample_ID}.pairs hic/${sample_ID}.hic ${genome_na
 # Version history and updating schedule
 # v1.0 2023/11/01 From fastq to hic without qc
 # v1.1 2023/11/02 add fastqc, galore, quality check
+# v1.2 2024/01/02 add error handling
