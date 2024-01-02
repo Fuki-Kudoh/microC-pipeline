@@ -17,13 +17,12 @@ error_handling() {
     echo "Error occurred in command: '$BASH_COMMAND' at line: $1"
     exit 1
 }
-
-trap 'error_handling $LINENO' ERR
-
 ##############################
 
 module load fastqc trimgalore samtools bwa pairtools preseq juicer
 mkdir temp temp/${sample_ID} BAM fastqc hic pairs stats
+
+trap 'error_handling $LINENO' ERR
 
 fastqc -t 64 -o fastqc/ fastq/${sample_ID}_R1_001.fastq.gz fastq/${sample_ID}_R2_001.fastq.gz
 trim_galore -j 64 -o fastq --paired fastq/${sample_ID}_R1_001.fastq.gz fastq/${sample_ID}_R2_001.fastq.gz
