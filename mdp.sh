@@ -20,7 +20,7 @@ error_handling() {
 ##############################
 
 module load fastqc trimgalore samtools bwa pairtools preseq juicer
-mkdir temp temp/${sample_ID} BAM fastqc hic pairs stats
+mkdir temp temp/${sample_ID} BAM fastqc hic pairs stats genome cool
 
 trap 'error_handling $LINENO' ERR
 
@@ -53,6 +53,7 @@ python3 get_qc.py -p stats/${sample_ID}.txt > stats/qc_${sample_ID}.txt
 pairtools split --nproc-in 64 --nproc-out 64 --output-pairs pairs/${sample_ID}.pairs \
 --output-sam BAM/${sample_ID}.bam temp/${sample_ID}/${sample_ID}.dedup.pairsam
 rm temp/${sample_ID}/${sample_ID}.dedup.pairsam
+
 #sort and indexing
 samtools sort -@64 -T BAM/${sample_ID}.bam -o BAM/${sample_ID}.PT.bam BAM/${sample_ID}.bam
 rm BAM/${sample_ID}.bam
@@ -62,9 +63,23 @@ preseq lc_extrap -bam -pe -extrap 2.1e9 -step 1e8 -seg_len 1000000000 \
 -output stats/comp_${sample_ID}.txt BAM/${sample_ID}.PT.bam
 #.hic contact map
 juicer_tools pre -j 64 pairs/${sample_ID}.pairs hic/${sample_ID}.hic ${genome_name}
+bgzip pairs/${sample_ID}.pairs
+
+#.cool contact matrix
+samtools faidx ${genome} --output genome/${genome_name}.fa.faidx
+cut -f1,2 genome/${genome_name}.fa.fai > genome/${genome_name}.genome
+
+module load mamba_install
+mamba_install
+mamba_istall update --install
+source myconda
+conda install -c conda-forge -c bioconda cooler
+pairix pairs/${sample_ID}.pairs.gz
+cooler cload pairix -p 64 genome/${genome_name}.genome:1000 pairs/${sample_ID}.pairs.gz cool/${sample_ID}.cool
 
 #######################
 # Version history and updating schedule
 # v1.0 2023/11/01 From fastq to hic without qc
 # v1.1 2023/11/02 add fastqc, galore, quality check
 # v1.2 2024/01/02 add error handling
+# v1.3 2024/01/04 integrate cooler format
