@@ -71,7 +71,7 @@ cut -f1,2 genome/${genome_name}.fa.fai > genome/${genome_name}.genome
 
 module load mamba_install
 mamba_install
-mamba_istall update --install
+mamba_install update --install
 source myconda
 conda install -c conda-forge -c bioconda cooler
 pairix pairs/${sample_ID}.pairs.gz
