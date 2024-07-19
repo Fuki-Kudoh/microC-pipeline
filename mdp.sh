@@ -75,11 +75,13 @@ mamba_install update --install
 source myconda
 conda install -c conda-forge -c bioconda cooler
 pairix pairs/${sample_ID}.pairs.gz
-cooler cload pairix -p 64 genome/${genome_name}.genome:1000 pairs/${sample_ID}.pairs.gz cool/${sample_ID}.1000.cool
+cooler cload pairix -p 64 genome/${genome_name}.genome:1000 pairs/${sample_ID}.pairs.gz cool/${sample_ID}.cool
+cooler zoomify -p 64 cool/${sample_ID}.cool
 
 #######################
 # Version history and updating schedule
 # v1.0 2023/11/01 From fastq to hic without qc
 # v1.1 2023/11/02 add fastqc, galore, quality check
 # v1.2 2024/01/02 add error handling
-# v1.3 2024/01/04 integrate cooler format
+# v1.3 2024/01/04 Integrate cooler format
+# v1.4 2024/07/19 bug fix
