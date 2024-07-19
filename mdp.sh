@@ -75,7 +75,7 @@ mamba_install update --install
 source myconda
 conda install -c conda-forge -c bioconda cooler
 pairix pairs/${sample_ID}.pairs.gz
-cooler cload pairix -p 64 genome/${genome_name}.genome:1000 pairs/${sample_ID}.pairs.gz cool/${sample_ID}.cool
+cooler cload pairix -p 64 genome/${genome_name}.genome:1000 pairs/${sample_ID}.pairs.gz cool/${sample_ID}.1000.cool
 
 #######################
 # Version history and updating schedule
