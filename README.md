@@ -1,4 +1,4 @@
-# microC-dovetail-pipeline
+# microC-pipeline
 This is just a pipeline that processes micro-C data by following the documentation by dovetail. \
 https://micro-c.readthedocs.io/en/latest/
 
