@@ -41,6 +41,20 @@ temp/${sample_ID}/${sample_ID}.sam > temp/${sample_ID}/${sample_ID}.pairsam
 pairtools sort --nproc 64 --tmpdir=temp/${sample_ID} temp/${sample_ID}/${sample_ID}.pairsam \
 > temp/${sample_ID}/${sample_ID}.sorted.pairsam
 rm temp/${sample_ID}/${sample_ID}.pairsam
+
+#complexity session
+#split 10 min
+pairtools split --nproc-in 64 --nproc-out 64 --output-sam BAM/${sample_ID}.undedup.bam temp/${sample_ID}/${sample_ID}.sorted.pairsam
+#sort and indexing
+samtools sort -@64 -T BAM/${sample_ID}.undedup.bam -o BAM/${sample_ID}.undedup.PT.bam BAM/${sample_ID}.undedup.bam
+rm BAM/${sample_ID}.undedup.bam
+samtools index BAM/${sample_ID}.undedup.PT.bam
+#complexity
+preseq lc_extrap -bam -pe -extrap 2.1e9 -step 1e8 -seg_len 1000000000 \
+-output stats/comp_${sample_ID}.txt BAM/${sample_ID}.undedup.PT.bam
+rm BAM/${sample_ID}.undedup.PT.bam
+
+#Go back process
 #dedup 50 min
 pairtools dedup --nproc-in 64 --nproc-out 64 --mark-dups --output-stats stats/${sample_ID}.txt \
 --output temp/${sample_ID}/${sample_ID}.dedup.pairsam temp/${sample_ID}/${sample_ID}.sorted.pairsam
@@ -58,9 +72,6 @@ rm temp/${sample_ID}/${sample_ID}.dedup.pairsam
 samtools sort -@64 -T BAM/${sample_ID}.bam -o BAM/${sample_ID}.PT.bam BAM/${sample_ID}.bam
 rm BAM/${sample_ID}.bam
 samtools index BAM/${sample_ID}.PT.bam
-#complexity
-preseq lc_extrap -bam -pe -extrap 2.1e9 -step 1e8 -seg_len 1000000000 \
--output stats/comp_${sample_ID}.txt BAM/${sample_ID}.PT.bam
 #.hic contact map
 juicer_tools pre -j 64 pairs/${sample_ID}.pairs hic/${sample_ID}.hic ${genome_name}
 bgzip pairs/${sample_ID}.pairs
@@ -69,9 +80,9 @@ bgzip pairs/${sample_ID}.pairs
 samtools faidx ${genome} --output genome/${genome_name}.fa.faidx
 cut -f1,2 genome/${genome_name}.fa.fai > genome/${genome_name}.genome
 
-module load mamba_install
-mamba_install
-mamba_install update --install
+#module load mamba_install
+#mamba_install
+#mamba_install update --install
 source myconda
 conda install -c conda-forge -c bioconda cooler
 pairix pairs/${sample_ID}.pairs.gz
@@ -85,3 +96,4 @@ cooler zoomify -p 64 cool/${sample_ID}.cool
 # v1.2 2024/01/02 add error handling
 # v1.3 2024/01/04 Integrate cooler format
 # v1.4 2024/07/19 bug fix
+# v1.5 2024/11/01 change preseq timing
