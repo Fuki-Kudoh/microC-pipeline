@@ -1,4 +1,4 @@
-````markdown
+
 # microC-pipeline
 
 Minimal Micro-C preprocessing and QC summarization on Slurm.  
@@ -24,17 +24,18 @@ Planned for v0.2.0: sample sheet orchestration, Nextflow preview, richer QC, con
 
 ```mermaid
 flowchart LR
-    A[FASTQ (R1/R2)] --> B[Align (bwa|bowtie2)]
-    B --> C[Sort/Index (samtools)]
-    C --> D[Pairing (pairtools)]
-    D --> E[Contact matrix (.cool, cooler)]
-    E --> F[QC collect (get_qc.py)]
-    subgraph Outputs
-      C
-      D
-      E
-      F
-    end
+  A["FASTQ (R1/R2)"] --> B["Align (bwa or bowtie2)"]
+  B --> C["Sort/Index (samtools)"]
+  C --> D["Pairing (pairtools)"]
+  D --> E["Contact matrix (.cool, cooler)"]
+  E --> F["QC collect (get_qc.py)"]
+
+  subgraph Outputs
+    C
+    D
+    E
+    F
+  end
 ````
 
 **I/O layout (per sample)**
