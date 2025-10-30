@@ -1,0 +1,29 @@
+name: ci
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shellcheck (bash scripts)
+        uses: ludeeus/action-shellcheck@v2
+        with:
+          scandir: .
+        # continue-on-error: true
+
+      - name: Python setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Pyflakes
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyflakes
+          pyflakes get_qc.py || true

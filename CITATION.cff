@@ -1,0 +1,20 @@
+
+cff-version: 1.2.0
+title: microC-pipeline
+message: "If you use this pipeline, please cite this release."
+type: software
+authors:
+  - family-names: Kudoh
+    given-names: Fuki
+repository-code: "https://github.com/Fuki-Kudoh/microC-pipeline"
+license: MIT
+version: "v0.1.0"
+date-released: "2025-10-29"
+preferred-citation:
+  type: software
+  title: microC-pipeline
+  authors:
+    - family-names: Kudoh
+      given-names: Fuki
+  year: 2025
+  notes: "First minimal runnable release (v0.1.0)"
