@@ -27,7 +27,7 @@ flowchart LR
   A["FASTQ (R1/R2)"] --> B["Align (bwa or bowtie2)"]
   B --> C["Sort/Index (samtools)"]
   C --> D["Pairing (pairtools)"]
-  D --> E["Contact matrix (.cool, cooler)"]
+  D --> E["Contact matrix (.cool, .hic)"]
   E --> F["QC collect (get_qc.py)"]
 
   subgraph Outputs
@@ -41,13 +41,14 @@ flowchart LR
 **I/O layout (per sample)**
 
 ```
-input/{SAMPLE}_R1.fastq.gz
-input/{SAMPLE}_R2.fastq.gz
-results/{SAMPLE}/
+  ├─ input/{SAMPLE}_R1.fastq.gz
+  ├─ input/{SAMPLE}_R2.fastq.gz
   ├─ align/     # BAM + index
   ├─ pairs/     # .pairs / stats
   ├─ cool/      # .cool
-  └─ logs/      # step-wise logs
+  ├─ hic/       # .hic
+  ├─ bam/       # .bam
+  └─ tmp/       # step-wise logs
 qc/{SAMPLE}/
   ├─ QC.tsv
   └─ QC.html
