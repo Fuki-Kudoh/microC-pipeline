@@ -125,7 +125,7 @@ You can rerun that command manually after a completed or partially completed run
 - Intermediate files may be removed after downstream files are created, matching the previous script behavior.
 - Module names and dependency installation are intentionally left to each HPC site.
 - Full biological validation requires running on real data and inspecting the outputs; syntax checks alone do not validate biological correctness.
-- No license file is included in this repository at this time.
+- Licensed under MIT. See `LICENSE`.
 
 ## Version note
 
