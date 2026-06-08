@@ -1,6 +1,6 @@
 # microC-pipeline
 
-`microC-pipeline` is a Micro-C preprocessing repository. The v0.5.0 development milestone keeps the lightweight config-driven single-sample runner introduced in v0.4.0 and makes its valid pairs, matrix, stats, QC, and manifest files first-class validated products.
+`microC-pipeline` is a Micro-C preprocessing repository. The v0.5.1 development milestone keeps the v0.5.0 output behavior and adds lightweight preflight and reproducibility hardening to the config-driven single-sample runner.
 
 The preferred interface is:
 
@@ -40,7 +40,7 @@ The default workflow is Micro-C-oriented. No restriction enzyme is required, the
 
 ```text
 README.md                         Project overview and usage notes
-bin/microc-pipeline               v0.5.0 config-driven single-sample CLI
+bin/microc-pipeline               v0.5.1 config-driven single-sample CLI
 microc_pipeline/                  Python package for config, output paths, validation, and command execution
 config/example.single-sample.yaml Example single-sample Micro-C config
 config/README.md                  Configuration directory notes
@@ -58,7 +58,7 @@ examples/README.md                Placeholder for future tiny synthetic examples
 
 ## Config-driven usage
 
-Start from `config/example.single-sample.yaml`:
+Start from `config/example.single-sample.yaml`; `sample` must match `^[A-Za-z0-9][A-Za-z0-9._-]*$`:
 
 ```yaml
 sample: SAMPLE_ID
@@ -98,7 +98,7 @@ Run one sample:
 bin/microc-pipeline run --config config/example.single-sample.yaml
 ```
 
-Validate outputs from an existing completed run without rerunning preprocessing:
+Validate outputs from an existing completed run without rerunning preprocessing. This command does not require original FASTQs or genome FASTA resources to still exist:
 
 ```bash
 bin/microc-pipeline validate-outputs --config config/example.single-sample.yaml
@@ -126,7 +126,7 @@ results/SAMPLE/
   output_manifest.json
 ```
 
-`run_metadata.json` records how the run was configured and executed, including standardized final output paths. `output_manifest.json` records which final outputs were expected and whether validation passed. Detailed output semantics, validation checks, and manifest fields are documented in `docs/outputs.md`.
+`run_metadata.json` records how the run was configured and executed, including standardized final output paths and best-effort external `tool_versions` for real runs. `output_manifest.json` records which final outputs were expected and whether validation passed. Detailed output semantics, validation checks, and manifest fields are documented in `docs/outputs.md`.
 
 ## Requirements
 
@@ -145,7 +145,7 @@ Install and configure dependencies before launching a real run. The config-drive
 
 The runner checks `juicer_tools` only when `outputs.make_hic: true`.
 
-The required genome FASTA should already have BWA indexes available for alignment. If `genome.chrom_sizes` is not provided, `genome.fasta` should have an existing non-empty `.fai` index, or the FASTA directory must be writable so the runner can create the index with `samtools faidx`.
+The required genome FASTA must already have non-empty BWA index sidecars (`.amb`, `.ann`, `.bwt`, `.pac`, and `.sa`) before `validate-config` or `run` can proceed. If `genome.chrom_sizes` is not provided, `genome.fasta` should also have an existing non-empty `.fai` index, or the FASTA directory must be writable so the runner can create the index with `samtools faidx`.
 
 ### HPC modules are site-specific
 

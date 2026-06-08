@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.5.1 - Unreleased
+
+### Added
+- Added sample name validation for the config-driven runner.
+- Added BWA index preflight validation for non-empty `.amb`, `.ann`, `.bwt`, `.pac`, and `.sa` sidecar files.
+- Added best-effort command-line tool version collection to `run_metadata.json`.
+
+### Changed
+- Removed an unreachable FASTA directory guard and cleaned up minor import placement.
+- Updated documentation for v0.5.1 preflight and reproducibility behavior.
+
+### Notes
+- This hardening release does not add restartable chunking, multi-sample support, full QC reports, or changes to the core processing command sequence.
+
 ## v0.5.0 - 2026-06-08
 
 ### Added

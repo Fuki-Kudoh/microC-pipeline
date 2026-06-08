@@ -6,7 +6,13 @@ import argparse
 import sys
 
 from .config import ConfigError, parse_and_validate_config
-from .runner import RunnerError, run_pipeline, validate_and_write_manifest, validate_chrom_sizes_feasibility
+from .runner import (
+    RunnerError,
+    run_pipeline,
+    validate_and_write_manifest,
+    validate_bwa_index,
+    validate_chrom_sizes_feasibility,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,6 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def command_validate_config(args: argparse.Namespace) -> int:
     config = parse_and_validate_config(args.config, check_files=True)
+    validate_bwa_index(config)
     validate_chrom_sizes_feasibility(config)
     print(f"Config validation succeeded for sample: {config.sample}")
     print(f"Assay: {config.assay}")
@@ -50,6 +57,7 @@ def command_validate_outputs(args: argparse.Namespace) -> int:
 
 def command_run(args: argparse.Namespace) -> int:
     config = parse_and_validate_config(args.config, check_files=True)
+    validate_bwa_index(config)
     validate_chrom_sizes_feasibility(config)
     run_pipeline(config, dry_run=args.dry_run)
     if not args.dry_run:

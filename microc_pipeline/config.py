@@ -1,8 +1,9 @@
-"""Configuration loading and validation for the v0.5.0 single-sample runner."""
+"""Configuration loading and validation for the v0.5.1 single-sample runner."""
 
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -43,6 +44,7 @@ class PipelineConfig:
 
 
 _MISSING = object()
+_SAFE_SAMPLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
 def _strip_comment(line: str) -> str:
@@ -178,6 +180,15 @@ def _require_string(value: Any, field: str) -> str:
     return value
 
 
+def _validate_sample_name(sample: str) -> None:
+    if not _SAFE_SAMPLE_RE.fullmatch(sample):
+        raise ConfigError(
+            "Invalid config field sample: expected a safe sample name matching "
+            r"^[A-Za-z0-9][A-Za-z0-9._-]*$ "
+            "(start with a letter or digit; use only letters, digits, dot, underscore, or hyphen)."
+        )
+
+
 def _require_bool(value: Any, field: str) -> bool:
     if not isinstance(value, bool):
         raise ConfigError(f"Invalid config field {field}: expected true or false.")
@@ -201,6 +212,7 @@ def parse_and_validate_config(
         raise ConfigError("Config root must be a mapping.")
 
     sample = _require_string(_get_required(raw, "sample"), "sample")
+    _validate_sample_name(sample)
     assay = _require_string(_get_optional(raw, "assay", "microc"), "assay")
     if assay != "microc":
         raise ConfigError(f"Unsupported assay: {assay}. v0.5.0 supports only assay: microc.")

@@ -12,7 +12,7 @@ Validate configuration without running preprocessing:
 bin/microc-pipeline validate-config --config config/example.single-sample.yaml
 ```
 
-Validate outputs from an existing completed run. This command uses the config only to infer expected output paths and toggles, so it does not require the original FASTQs or genome FASTA to still be present:
+Validate outputs from an existing completed run. This command uses the config only to infer expected output paths and toggles, so it does not require the original FASTQs, genome FASTA, or BWA index sidecars to still be present:
 
 ```bash
 bin/microc-pipeline validate-outputs --config config/example.single-sample.yaml
@@ -44,12 +44,12 @@ outputs:
 
 | Field | Required | Default | Description |
 | --- | --- | --- | --- |
-| `sample` | Yes | None | Sample identifier used in the per-sample output directory and standardized output names. |
+| `sample` | Yes | None | Sample identifier used in the per-sample output directory and standardized output names. Must match `^[A-Za-z0-9][A-Za-z0-9._-]*$`. |
 | `assay` | No | `microc` | Only `microc` is supported. No enzyme-aware Hi-C mode is implemented. |
 | `fastq.r1` | Yes | None | R1 FASTQ path. |
 | `fastq.r2` | Yes | None | R2 FASTQ path. |
 | `genome.name` | Yes | None | Genome label passed to tools that need a genome name. |
-| `genome.fasta` | Yes | None | Reference FASTA path. BWA indexes should already exist. |
+| `genome.fasta` | Yes | None | Reference FASTA path. Non-empty BWA index sidecars (`.amb`, `.ann`, `.bwt`, `.pac`, `.sa`) must already exist before `validate-config` or `run`. |
 | `genome.chrom_sizes` | No | `null` | Optional chromosome sizes file. If omitted, the runner uses `genome.fasta.fai` or creates it with `samtools faidx` when the FASTA directory is writable. |
 | `threads` | No | `$SLURM_CPUS_PER_TASK` or `16` | Positive integer thread count. |
 | `bin_sizes` | No | `[1000]` | Positive integer bin sizes. v0.5.0 uses the first value for `.cool`; optional `.mcool` is produced by `cooler zoomify`. |
@@ -69,11 +69,11 @@ The output toggles define both the commands that are planned and the final files
 - `outputs.make_mcool: true` makes `cool/SAMPLE.mcool` a required validated output.
 - `outputs.make_mcool: false` skips `.mcool` creation and validation.
 
-Always-required final outputs are the BGZF-compressed valid pairs file, Pairix index, `.cool`, Pairtools stats, Preseq output, QC TSV, `run_metadata.json`, and `output_manifest.json`.
+Always-required final outputs are the BGZF-compressed valid pairs file, Pairix index, `.cool`, Pairtools stats, Preseq output, QC TSV, `run_metadata.json`, and `output_manifest.json`. For real runs, `run_metadata.json` includes best-effort `tool_versions` records for required command-line tools.
 
 ## Dry run
 
-Dry-run mode prints planned commands, expected final outputs, and planned validation checks without validating files:
+Dry-run mode validates the config and BWA index preflight, then prints planned commands, expected final outputs, and planned validation checks without running external tools:
 
 ```bash
 bin/microc-pipeline run --config config/example.single-sample.yaml --dry-run
