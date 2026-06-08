@@ -1,8 +1,9 @@
-"""Command construction and execution for the v0.5.0 single-sample workflow."""
+"""Command construction and execution for the v0.5.1 single-sample workflow."""
 
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,20 @@ REQUIRED_COMMANDS = (
     "cooler",
     "python3",
 )
+BWA_INDEX_SUFFIXES = (".amb", ".ann", ".bwt", ".pac", ".sa")
+VERSION_COMMANDS = {
+    "fastqc": "fastqc --version",
+    "trim_galore": "trim_galore --version",
+    "samtools": "samtools --version",
+    "bwa": "bwa 2>&1",
+    "pairtools": "pairtools --version",
+    "preseq": "preseq --version",
+    "bgzip": "bgzip --version",
+    "pairix": "pairix --version",
+    "cooler": "cooler --version",
+    "python3": "python3 --version",
+    "juicer_tools": "juicer_tools --version",
+}
 
 
 class RunnerError(RuntimeError):
@@ -47,13 +62,70 @@ def trim_galore_output_name(fastq: Path, read_number: int) -> str:
     return f"{name}_val_{read_number}.fq.gz"
 
 
-def check_dependencies(config: PipelineConfig) -> None:
+def required_commands_for_config(config: PipelineConfig) -> list[str]:
     required = list(REQUIRED_COMMANDS)
     if config.outputs.make_hic:
         required.append("juicer_tools")
-    missing = [command for command in required if shutil.which(command) is None]
+    return required
+
+
+def check_dependencies(config: PipelineConfig) -> None:
+    missing = [command for command in required_commands_for_config(config) if shutil.which(command) is None]
     if missing:
         raise RunnerError("Missing required command(s): " + ", ".join(missing))
+
+
+def validate_bwa_index(config: PipelineConfig) -> None:
+    invalid = []
+    for suffix in BWA_INDEX_SUFFIXES:
+        sidecar = Path(str(config.genome.fasta) + suffix)
+        if not sidecar.is_file() or sidecar.stat().st_size == 0:
+            invalid.append(sidecar)
+    if invalid:
+        raise ConfigError(
+            f"BWA index files are missing or empty for genome FASTA {config.genome.fasta}. "
+            f"Create them first with: bwa index {q(config.genome.fasta)}"
+        )
+
+
+def collect_tool_versions(config: PipelineConfig) -> dict[str, dict[str, object]]:
+    versions: dict[str, dict[str, object]] = {}
+    for command in required_commands_for_config(config):
+        executable = shutil.which(command)
+        version_command = VERSION_COMMANDS[command]
+        record: dict[str, object] = {
+            "path": executable,
+            "available": executable is not None,
+            "version": None,
+            "version_command": version_command,
+            "version_exit_code": None,
+        }
+        if executable is None:
+            record["error"] = "command not found"
+            versions[command] = record
+            continue
+        try:
+            completed = subprocess.run(
+                version_command,
+                shell=True,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=15,
+            )
+        except Exception as exc:  # best-effort provenance only
+            record["error"] = str(exc)
+            versions[command] = record
+            continue
+        output = completed.stdout.strip()
+        record["version_exit_code"] = completed.returncode
+        if completed.returncode == 0 and output:
+            record["version"] = output.splitlines()[0]
+        else:
+            record["error"] = output or f"version command exited with {completed.returncode}"
+        versions[command] = record
+    return versions
 
 
 def ensure_output_dirs(config: PipelineConfig) -> dict[str, Path]:
@@ -81,8 +153,6 @@ def derive_chrom_sizes(config: PipelineConfig, dirs: dict[str, Path], *, dry_run
             raise RunnerError(f"FASTA directory does not exist: {fasta_dir}")
         if not dry_run and not fasta_dir.is_dir():
             raise RunnerError(f"FASTA directory is not a directory: {fasta_dir}")
-        if not dry_run and not fasta_dir.stat().st_mode:
-            raise RunnerError(f"Cannot inspect FASTA directory: {fasta_dir}")
         if dry_run or os_access_writable(fasta_dir):
             commands.append(f"samtools faidx {q(config.genome.fasta)}")
             if not dry_run:
@@ -102,12 +172,17 @@ def derive_chrom_sizes(config: PipelineConfig, dirs: dict[str, Path], *, dry_run
 
 
 def os_access_writable(path: Path) -> bool:
-    import os
-
     return os.access(path, os.W_OK)
 
 
-def build_metadata(config: PipelineConfig, chrom_sizes: Path, commands: list[str], *, dry_run: bool) -> dict[str, object]:
+def build_metadata(
+    config: PipelineConfig,
+    chrom_sizes: Path,
+    commands: list[str],
+    *,
+    dry_run: bool,
+    tool_versions: dict[str, dict[str, object]] | None = None,
+) -> dict[str, object]:
     return {
         "sample": config.sample,
         "assay": config.assay,
@@ -127,6 +202,7 @@ def build_metadata(config: PipelineConfig, chrom_sizes: Path, commands: list[str
         },
         "final_outputs": final_output_paths(config),
         "pipeline_version": __version__,
+        "tool_versions": tool_versions or {},
         "dry_run": dry_run,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "commands": commands,
@@ -259,7 +335,8 @@ def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
         print_plan(config, chrom_commands, commands)
         return
 
-    metadata = build_metadata(config, chrom_sizes, all_commands, dry_run=False)
+    tool_versions = collect_tool_versions(config)
+    metadata = build_metadata(config, chrom_sizes, all_commands, dry_run=False, tool_versions=tool_versions)
     metadata_path = final_outputs(config).run_metadata
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
 

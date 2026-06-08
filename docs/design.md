@@ -7,7 +7,7 @@
 1. A retained legacy Slurm script, `mdp.sh`, kept for backward compatibility.
 2. A lightweight config-driven single-sample runner, `bin/microc-pipeline`, for modernized Micro-C preprocessing.
 
-The v0.5.0 milestone keeps the v0.4.0 single-sample runner model and makes final valid pairs, matrix, stats, QC, and manifest files first-class products. It adds standardized names, output validation, `output_manifest.json`, and a `validate-outputs` command.
+The v0.5.0 milestone keeps the v0.4.0 single-sample runner model and makes final valid pairs, matrix, stats, QC, and manifest files first-class products. The v0.5.1 hardening milestone preserves that output behavior while adding safe sample-name validation, BWA index preflight checks for `validate-config` and `run`, and best-effort tool-version metadata for real runs.
 
 ## Micro-C-first boundary
 
@@ -41,9 +41,9 @@ These remain future milestones.
 
 ## Metadata and manifest split
 
-`run_metadata.json` records how a run was configured and executed: config path, inputs, genome resources, threads, commands, output toggles, and standardized final output paths.
+`run_metadata.json` records how a run was configured and executed: config path, inputs, genome resources, threads, commands, output toggles, standardized final output paths, and best-effort command-line tool versions.
 
-`output_manifest.json` records what final outputs were expected and whether lightweight validation passed. Keeping these concerns separate makes output inspection possible without treating execution provenance as validation state.
+`output_manifest.json` records what final outputs were expected and whether lightweight validation passed. Keeping these concerns separate makes output inspection possible without treating execution provenance as validation state; `validate-outputs` intentionally does not require original FASTQs or genome FASTA resources.
 
 ## Future direction
 

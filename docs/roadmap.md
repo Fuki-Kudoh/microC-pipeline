@@ -231,6 +231,23 @@ Expected status after this milestone:
 The pipeline has clear, validated, documented final outputs.
 ```
 
+## Milestone v0.5.1: preflight and reproducibility hardening
+
+Goal: harden the existing single-sample runner without changing v0.5.0 output names or the core command sequence.
+
+Planned or completed tasks:
+
+- [x] Validate safe config `sample` names with `^[A-Za-z0-9][A-Za-z0-9._-]*$`.
+- [x] Require non-empty BWA index sidecars before `validate-config` and `run`.
+- [x] Record best-effort external command `tool_versions` in `run_metadata.json` for real runs.
+- [x] Keep `validate-outputs` independent of original FASTQs and genome resources.
+
+Expected status after this milestone:
+
+```text
+The v0.5.0 output contract remains unchanged while preflight errors and run provenance improve.
+```
+
 ## Milestone v0.6.0: restartable chunk engine
 
 Goal: integrate the restartability concepts developed in HiC-Nap.
