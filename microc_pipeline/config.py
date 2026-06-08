@@ -1,4 +1,4 @@
-"""Configuration loading and validation for the v0.4.0 single-sample runner."""
+"""Configuration loading and validation for the v0.5.0 single-sample runner."""
 
 from __future__ import annotations
 
@@ -81,7 +81,7 @@ def _parse_scalar(value: str) -> Any:
 
 
 def _parse_simple_yaml(text: str) -> dict[str, Any]:
-    """Parse the small YAML subset used by the documented v0.4.0 config.
+    """Parse the small YAML subset used by the documented v0.5.0 config.
 
     This intentionally supports mappings, nested mappings, scalar values, and
     lists of scalar values so the runner does not need an external Python YAML
@@ -203,7 +203,7 @@ def parse_and_validate_config(
     sample = _require_string(_get_required(raw, "sample"), "sample")
     assay = _require_string(_get_optional(raw, "assay", "microc"), "assay")
     if assay != "microc":
-        raise ConfigError(f"Unsupported assay: {assay}. v0.4.0 supports only assay: microc.")
+        raise ConfigError(f"Unsupported assay: {assay}. v0.5.0 supports only assay: microc.")
 
     fastq_r1 = _resolve_path(_get_required(raw, "fastq.r1"), "fastq.r1")
     fastq_r2 = _resolve_path(_get_required(raw, "fastq.r2"), "fastq.r2")
