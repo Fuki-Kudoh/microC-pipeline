@@ -1,35 +1,50 @@
 # Design notes
 
-This document records current design assumptions for `microC-pipeline` as the repository moves through the v0.4.0 config-driven single-sample milestone.
+## Current design
 
-## Current implementation status
+`microC-pipeline` currently has two interfaces:
 
-- `bin/microc-pipeline` provides a lightweight config-driven single-sample Micro-C entrypoint.
-- `mdp.sh` remains the retained legacy/minimal Slurm script for backward compatibility.
-- The config-driven runner removes the legacy need to edit hard-coded FASTQ names by accepting explicit `fastq.r1` and `fastq.r2` paths in YAML.
-- The current runnable workflows remain single-sample oriented.
-- Restartable chunk-based execution is not available in the current repository.
-- Multi-sample sample-sheet orchestration is not implemented.
-- Snakemake and Nextflow engines are not implemented.
+1. A retained legacy Slurm script, `mdp.sh`, kept for backward compatibility.
+2. A lightweight config-driven single-sample runner, `bin/microc-pipeline`, for modernized Micro-C preprocessing.
 
-## v0.4.0 design boundary
+The v0.5.0 milestone keeps the v0.4.0 single-sample runner model and makes final valid pairs, matrix, stats, QC, and manifest files first-class products. It adds standardized names, output validation, `output_manifest.json`, and a `validate-outputs` command.
 
-The v0.4.0 implementation is intentionally small. It validates one YAML config, creates one per-sample output directory, derives or copies chromosome sizes, writes structured metadata, and executes the same core Micro-C preprocessing path as the legacy script.
+## Micro-C-first boundary
 
-The default workflow is Micro-C-oriented and does not require restriction enzyme information. Restriction-fragment-aware Hi-C behavior may be considered in a future milestone, but v0.4.0 does not implement restriction fragment generation, `pairtools restrict`, or enzyme-aware processing.
+The runner is Micro-C-first:
 
-## Engine direction planning note
+- no restriction enzyme field is required or accepted as a workflow concept;
+- no restriction fragments are generated;
+- `pairtools restrict` is not run;
+- enzyme-aware Hi-C processing is not implemented.
 
-No final engine choice has been made for a future production-facing workflow.
+Optional `.hic` output is only the Juicer contact-map file format. It does not indicate Hi-C assay mode.
 
-Candidate future directions include:
+## What v0.5.0 deliberately does not add
 
-- **Bash-first**: keep the implementation close to the existing script while adding stronger structure, validation, and restart behavior.
-- **Snakemake**: use a rule-based workflow manager with explicit inputs, outputs, and cluster execution support.
-- **Nextflow**: use a process-based workflow manager with strong portability patterns for local, HPC, and containerized execution.
+The v0.5.0 output milestone does **not** add:
 
-HiC-Nap restartable chunk-processing concepts are expected to inform future development, especially FASTQ chunking, per-chunk status tracking, conservative restart behavior, global merge/deduplication, and progress logging. Those concepts are planning inputs only in this repository today; they are not implemented here yet.
+- multi-sample sample-sheet execution;
+- restartable chunk-based execution;
+- Snakemake or Nextflow workflows;
+- containers;
+- CI;
+- full HTML QC reports;
+- project-level QC summaries;
+- enzyme-aware Hi-C behavior;
+- restriction fragment generation;
+- `pairtools restrict`;
+- loop, compartment, TAD, or differential contact analysis;
+- downstream biological interpretation.
 
-## Near-term design boundaries
+These remain future milestones.
 
-Near-term work should avoid turning v0.4.0 into a large framework. Later milestones may standardize valid pairs and matrix outputs, add restartable chunk execution, choose a workflow engine, add sample-sheet support, improve QC, and introduce packaging or containers.
+## Metadata and manifest split
+
+`run_metadata.json` records how a run was configured and executed: config path, inputs, genome resources, threads, commands, output toggles, and standardized final output paths.
+
+`output_manifest.json` records what final outputs were expected and whether lightweight validation passed. Keeping these concerns separate makes output inspection possible without treating execution provenance as validation state.
+
+## Future direction
+
+Future milestones may add restartability, multi-sample orchestration, workflow-manager integrations, richer QC, packaging, tests, and deeper validators. Those changes should preserve the v0.5.0 final output names where possible.

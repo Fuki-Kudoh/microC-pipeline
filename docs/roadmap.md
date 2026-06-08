@@ -205,6 +205,7 @@ results/SAMPLE/
   cool/SAMPLE.mcool
   hic/SAMPLE.hic
   stats/SAMPLE.pairtools.stats.txt
+  stats/SAMPLE.preseq.lc_extrap.txt
   qc/SAMPLE.qc.tsv
 ```
 
@@ -216,13 +217,13 @@ results/SAMPLE/
   bam/SAMPLE.PT.bam.bai
 ```
 
-Planned tasks:
+Completed v0.5.0 tasks:
 
-- Standardize valid pairs output naming.
-- Ensure valid pairs are BGZF-compressed and pairix-indexed.
-- Add output validation for pairs, pairix index, cool, mcool, and hic where feasible.
-- Add optional BAM retention via config.
-- Document all outputs in `docs/outputs.md`.
+- [x] Standardized valid pairs output naming as `pairs/SAMPLE.valid.pairs.gz`.
+- [x] Ensured valid pairs are BGZF-compressed and pairix-indexed as `pairs/SAMPLE.valid.pairs.gz.px2`.
+- [x] Added output validation for pairs, pairix index, cool, mcool, hic, stats, QC TSV, and optional BAM where feasible.
+- [x] Added optional BAM retention via `outputs.keep_bam`.
+- [x] Documented all standardized outputs, validation checks, and the manifest schema in `docs/outputs.md`.
 
 Expected status after this milestone:
 

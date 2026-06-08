@@ -1,4 +1,4 @@
-"""Command construction and execution for the v0.4.0 single-sample workflow."""
+"""Command construction and execution for the v0.5.0 single-sample workflow."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ from shlex import quote
 
 from . import __version__
 from .config import ConfigError, PipelineConfig
+from .outputs import build_manifest, final_output_paths, final_outputs
+from .validation import OutputValidationError, validate_outputs, validation_checks
 
 OUTPUT_SUBDIRS = ("bam", "cool", "fastqc", "hic", "genome", "logs", "pairs", "qc", "stats", "temp")
 REQUIRED_COMMANDS = (
@@ -123,6 +125,7 @@ def build_metadata(config: PipelineConfig, chrom_sizes: Path, commands: list[str
             "make_hic": config.outputs.make_hic,
             "make_mcool": config.outputs.make_mcool,
         },
+        "final_outputs": final_output_paths(config),
         "pipeline_version": __version__,
         "dry_run": dry_run,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -150,9 +153,10 @@ def workflow_commands(config: PipelineConfig, dirs: dict[str, Path], chrom_sizes
     raw_bam = dirs["bam"] / f"{sample}.bam"
     final_bam = dirs["bam"] / f"{sample}.PT.bam"
     final_bai = Path(str(final_bam) + ".bai")
-    pairs = dirs["pairs"] / f"{sample}.pairs"
-    pairs_gz = Path(str(pairs) + ".gz")
-    cool = dirs["cool"] / f"{sample}.cool"
+    outputs = final_outputs(config)
+    pairs = outputs.valid_pairs_uncompressed
+    pairs_gz = outputs.valid_pairs
+    cool = outputs.cool
 
     commands = [
         f"mkdir -p {q(trim_dir)} {q(sample_temp)}",
@@ -166,11 +170,11 @@ def workflow_commands(config: PipelineConfig, dirs: dict[str, Path], chrom_sizes
         f"samtools sort -@ {threads} -T {q(undedup_bam)} -o {q(undedup_pt_bam)} {q(undedup_bam)}",
         f"rm {q(undedup_bam)}",
         f"samtools index {q(undedup_pt_bam)}",
-        f"preseq lc_extrap -bam -pe -extrap 2.1e9 -step 1e8 -seg_len 1000000000 -output {q(dirs['stats'] / ('comp_' + sample + '.txt'))} {q(undedup_pt_bam)}",
+        f"preseq lc_extrap -bam -pe -extrap 2.1e9 -step 1e8 -seg_len 1000000000 -output {q(outputs.preseq)} {q(undedup_pt_bam)}",
         f"rm {q(undedup_pt_bam)}",
-        f"pairtools dedup --nproc-in {threads} --nproc-out {threads} --mark-dups --output-stats {q(dirs['stats'] / (sample + '.txt'))} --output {q(dedup_pairsam)} {q(sorted_pairsam)}",
+        f"pairtools dedup --nproc-in {threads} --nproc-out {threads} --mark-dups --output-stats {q(outputs.pairtools_stats)} --output {q(dedup_pairsam)} {q(sorted_pairsam)}",
         f"rm {q(sorted_pairsam)}",
-        f"python3 {q(get_qc)} -p {q(dirs['stats'] / (sample + '.txt'))} > {q(dirs['qc'] / ('qc_' + sample + '.txt'))}",
+        f"python3 {q(get_qc)} -p {q(outputs.pairtools_stats)} --format tsv > {q(outputs.qc_tsv)}",
         f"pairtools split --nproc-in {threads} --nproc-out {threads} --output-pairs {q(pairs)} --output-sam {q(raw_bam)} {q(dedup_pairsam)}",
         f"rm {q(dedup_pairsam)}",
         f"samtools sort -@ {threads} -T {q(raw_bam)} -o {q(final_bam)} {q(raw_bam)}",
@@ -178,7 +182,7 @@ def workflow_commands(config: PipelineConfig, dirs: dict[str, Path], chrom_sizes
         f"samtools index {q(final_bam)}",
     ]
     if config.outputs.make_hic:
-        commands.append(f"juicer_tools pre -j {threads} {q(pairs)} {q(dirs['hic'] / (sample + '.hic'))} {q(config.genome.name)}")
+        commands.append(f"juicer_tools pre -j {threads} {q(pairs)} {q(outputs.hic)} {q(config.genome.name)}")
     commands.extend(
         [
             f"bgzip {q(pairs)}",
@@ -187,7 +191,7 @@ def workflow_commands(config: PipelineConfig, dirs: dict[str, Path], chrom_sizes
         ]
     )
     if config.outputs.make_mcool:
-        commands.append(f"cooler zoomify -p {threads} {q(cool)}")
+        commands.append(f"cooler zoomify -p {threads} -o {q(outputs.mcool)} {q(cool)}")
     if not config.outputs.keep_bam:
         commands.append(f"rm -f {q(final_bam)} {q(final_bai)}")
     return commands
@@ -208,12 +212,36 @@ def print_plan(config: PipelineConfig, chrom_commands: list[str], commands: list
     print(f"Threads: {config.threads}")
     if len(config.bin_sizes) > 1:
         print(
-            "Warning: v0.4.0 uses only the first configured bin size for .cool generation: "
+            "Warning: v0.5.0 uses only the first configured bin size for .cool generation: "
             f"{config.bin_sizes[0]}"
         )
     print("Planned commands:")
     for command in [*chrom_commands, *commands]:
         print(command)
+    print("Expected final outputs:")
+    for name, path in final_output_paths(config).items():
+        print(f"{name}: {path}")
+    print("Planned validation checks:")
+    for check in validation_checks(config):
+        print(f"- {check}")
+
+
+def write_output_manifest(config: PipelineConfig, validation_results: dict[str, dict[str, object]] | None = None) -> None:
+    manifest_path = final_outputs(config).output_manifest
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(
+        json.dumps(build_manifest(config, validation_results), indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def validate_and_write_manifest(config: PipelineConfig) -> None:
+    try:
+        results = validate_outputs(config)
+    except OutputValidationError as exc:
+        write_output_manifest(config, exc.results)
+        raise RunnerError(str(exc)) from exc
+    write_output_manifest(config, results)
 
 
 def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
@@ -232,7 +260,7 @@ def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
         return
 
     metadata = build_metadata(config, chrom_sizes, all_commands, dry_run=False)
-    metadata_path = config.sample_output_dir / "run_metadata.json"
+    metadata_path = final_outputs(config).run_metadata
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
 
     log_path = dirs["logs"] / f"{config.sample}.log"
@@ -244,7 +272,7 @@ def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
         print(f"Threads: {config.threads}", file=log_handle)
         if len(config.bin_sizes) > 1:
             print(
-                "Warning: v0.4.0 uses only the first configured bin size for .cool generation: "
+                "Warning: v0.5.0 uses only the first configured bin size for .cool generation: "
                 f"{config.bin_sizes[0]}",
                 file=log_handle,
             )
@@ -252,6 +280,8 @@ def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
             print(f"$ {command}", file=log_handle, flush=True)
         for command in commands:
             run_shell(command, log_handle=log_handle)
+
+    validate_and_write_manifest(config)
 
 
 def validate_chrom_sizes_feasibility(config: PipelineConfig) -> None:
