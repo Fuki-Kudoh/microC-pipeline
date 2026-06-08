@@ -1,7 +1,19 @@
 # Configuration directory
 
-This directory is reserved for future configuration examples and schemas.
+This directory contains example configuration files for the lightweight config-driven single-sample Micro-C runner.
 
-No modern config-driven runner is implemented yet. The current runnable workflow is still `mdp.sh`, which accepts command-line arguments and uses the legacy FASTQ layout described in `README.md`.
+- `example.single-sample.yaml` documents the v0.4.0 single-sample config format.
 
-Future configuration work may define sample metadata, FASTQ paths, genome resources, output options, threading, and QC settings.
+Validate a config before launching a full run:
+
+```bash
+bin/microc-pipeline validate-config --config config/example.single-sample.yaml
+```
+
+Print the planned command sequence without running external tools:
+
+```bash
+bin/microc-pipeline run --config config/example.single-sample.yaml --dry-run
+```
+
+The default v0.4.0 workflow is Micro-C-oriented and does not require restriction enzyme information.

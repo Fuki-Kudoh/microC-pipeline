@@ -1,0 +1,24 @@
+sample: SAMPLE_ID
+
+assay: microc
+
+fastq:
+  r1: fastq/SAMPLE_R1.fastq.gz
+  r2: fastq/SAMPLE_R2.fastq.gz
+
+genome:
+  name: mm10
+  fasta: /path/to/mm10.fa
+  chrom_sizes: null
+
+threads: 16
+
+bin_sizes:
+  - 1000
+
+output_dir: results
+
+outputs:
+  keep_bam: true
+  make_hic: true
+  make_mcool: true
