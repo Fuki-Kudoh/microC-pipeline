@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## v0.5.0 - Unreleased
+## v0.5.0 - 2026-06-08
 
 ### Added
 - Added standardized config-driven final output names for valid pairs, matrices, stats, QC, optional `.hic`, and optional BAM outputs.
