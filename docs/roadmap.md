@@ -94,9 +94,9 @@ Planned or completed tasks:
 - [x] Remove in-script software installation.
 - [x] Improve FASTA index and chromosome sizes handling.
 - [x] Improve `get_qc.py` argument parsing and error handling.
-- [ ] Add a license file.
-- [ ] Update README after license addition.
-- [ ] Add a changelog.
+- [x] Add a license file.
+- [x] Update README after license addition.
+- [x] Add a changelog.
 
 Expected status after this milestone:
 

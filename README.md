@@ -129,4 +129,6 @@ You can rerun that command manually after a completed or partially completed run
 
 ## Version note
 
-Legacy script version history is retained in comments at the bottom of `mdp.sh`. This README does not assign a separate release version.
+Legacy script version history is retained in comments at the bottom of `mdp.sh`. Repository-level release history is tracked in `CHANGELOG.md`.
+
+The `v0.2.0` release is a repository-polish release for the legacy/minimal Slurm workflow. It does not make this repository a fully restartable workflow manager pipeline.
