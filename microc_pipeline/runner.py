@@ -1,17 +1,19 @@
-"""Command construction and execution for the v0.4.0 single-sample workflow."""
+"""Command construction and execution for the v0.5.1 single-sample workflow."""
 
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from shlex import quote
 
 from . import __version__
 from .config import ConfigError, PipelineConfig
+from .outputs import build_manifest, final_output_paths, final_outputs
+from .validation import OutputValidationError, validate_outputs, validation_checks
 
 OUTPUT_SUBDIRS = ("bam", "cool", "fastqc", "hic", "genome", "logs", "pairs", "qc", "stats", "temp")
 REQUIRED_COMMANDS = (
@@ -26,6 +28,21 @@ REQUIRED_COMMANDS = (
     "cooler",
     "python3",
 )
+
+BWA_INDEX_SUFFIXES = (".amb", ".ann", ".bwt", ".pac", ".sa")
+TOOL_VERSION_COMMANDS = {
+    "fastqc": ("fastqc", "--version"),
+    "trim_galore": ("trim_galore", "--version"),
+    "samtools": ("samtools", "--version"),
+    "bwa": ("bwa",),
+    "pairtools": ("pairtools", "--version"),
+    "preseq": ("preseq",),
+    "bgzip": ("bgzip", "--version"),
+    "pairix": ("pairix", "--version"),
+    "cooler": ("cooler", "--version"),
+    "python3": ("python3", "--version"),
+    "juicer_tools": ("juicer_tools", "--version"),
+}
 
 
 class RunnerError(RuntimeError):
@@ -46,12 +63,65 @@ def trim_galore_output_name(fastq: Path, read_number: int) -> str:
 
 
 def check_dependencies(config: PipelineConfig) -> None:
+    missing = [command for command in required_commands(config) if shutil.which(command) is None]
+    if missing:
+        raise RunnerError("Missing required command(s): " + ", ".join(missing))
+
+
+def required_commands(config: PipelineConfig) -> list[str]:
     required = list(REQUIRED_COMMANDS)
     if config.outputs.make_hic:
         required.append("juicer_tools")
-    missing = [command for command in required if shutil.which(command) is None]
-    if missing:
-        raise RunnerError("Missing required command(s): " + ", ".join(missing))
+    return required
+
+
+def validate_bwa_index(config: PipelineConfig) -> None:
+    invalid: list[Path] = []
+    for suffix in BWA_INDEX_SUFFIXES:
+        index_path = Path(str(config.genome.fasta) + suffix)
+        if not index_path.is_file() or index_path.stat().st_size == 0:
+            invalid.append(index_path)
+    if invalid:
+        suffixes = ", ".join(BWA_INDEX_SUFFIXES)
+        invalid_paths = ", ".join(str(path) for path in invalid)
+        raise ConfigError(
+            f"BWA index files are missing or empty for genome FASTA {config.genome.fasta}. "
+            f"Expected suffixes: {suffixes}. Missing or empty: {invalid_paths}. "
+            f"Create them first with: bwa index {q(config.genome.fasta)}"
+        )
+
+
+def collect_tool_versions(config: PipelineConfig) -> dict[str, dict[str, object]]:
+    versions: dict[str, dict[str, object]] = {}
+    for command in required_commands(config):
+        executable = shutil.which(command)
+        entry: dict[str, object] = {"path": executable}
+        version_command = TOOL_VERSION_COMMANDS.get(command, (command, "--version"))
+        if executable is None:
+            entry["available"] = False
+            entry["version"] = None
+            versions[command] = entry
+            continue
+        entry["available"] = True
+        try:
+            completed = subprocess.run(
+                version_command,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=10,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            entry["version"] = None
+            entry["version_error"] = str(exc)
+        else:
+            output = completed.stdout.strip().splitlines()
+            entry["version"] = output[0] if output else None
+            entry["version_command"] = " ".join(version_command)
+            entry["version_exit_code"] = completed.returncode
+        versions[command] = entry
+    return versions
 
 
 def ensure_output_dirs(config: PipelineConfig) -> dict[str, Path]:
@@ -79,8 +149,6 @@ def derive_chrom_sizes(config: PipelineConfig, dirs: dict[str, Path], *, dry_run
             raise RunnerError(f"FASTA directory does not exist: {fasta_dir}")
         if not dry_run and not fasta_dir.is_dir():
             raise RunnerError(f"FASTA directory is not a directory: {fasta_dir}")
-        if not dry_run and not fasta_dir.stat().st_mode:
-            raise RunnerError(f"Cannot inspect FASTA directory: {fasta_dir}")
         if dry_run or os_access_writable(fasta_dir):
             commands.append(f"samtools faidx {q(config.genome.fasta)}")
             if not dry_run:
@@ -100,12 +168,17 @@ def derive_chrom_sizes(config: PipelineConfig, dirs: dict[str, Path], *, dry_run
 
 
 def os_access_writable(path: Path) -> bool:
-    import os
-
     return os.access(path, os.W_OK)
 
 
-def build_metadata(config: PipelineConfig, chrom_sizes: Path, commands: list[str], *, dry_run: bool) -> dict[str, object]:
+def build_metadata(
+    config: PipelineConfig,
+    chrom_sizes: Path,
+    commands: list[str],
+    *,
+    dry_run: bool,
+    tool_versions: dict[str, dict[str, object]] | None = None,
+) -> dict[str, object]:
     return {
         "sample": config.sample,
         "assay": config.assay,
@@ -123,7 +196,9 @@ def build_metadata(config: PipelineConfig, chrom_sizes: Path, commands: list[str
             "make_hic": config.outputs.make_hic,
             "make_mcool": config.outputs.make_mcool,
         },
+        "final_outputs": final_output_paths(config),
         "pipeline_version": __version__,
+        "tool_versions": tool_versions or {},
         "dry_run": dry_run,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "commands": commands,
@@ -150,9 +225,10 @@ def workflow_commands(config: PipelineConfig, dirs: dict[str, Path], chrom_sizes
     raw_bam = dirs["bam"] / f"{sample}.bam"
     final_bam = dirs["bam"] / f"{sample}.PT.bam"
     final_bai = Path(str(final_bam) + ".bai")
-    pairs = dirs["pairs"] / f"{sample}.pairs"
-    pairs_gz = Path(str(pairs) + ".gz")
-    cool = dirs["cool"] / f"{sample}.cool"
+    outputs = final_outputs(config)
+    pairs = outputs.valid_pairs_uncompressed
+    pairs_gz = outputs.valid_pairs
+    cool = outputs.cool
 
     commands = [
         f"mkdir -p {q(trim_dir)} {q(sample_temp)}",
@@ -166,11 +242,11 @@ def workflow_commands(config: PipelineConfig, dirs: dict[str, Path], chrom_sizes
         f"samtools sort -@ {threads} -T {q(undedup_bam)} -o {q(undedup_pt_bam)} {q(undedup_bam)}",
         f"rm {q(undedup_bam)}",
         f"samtools index {q(undedup_pt_bam)}",
-        f"preseq lc_extrap -bam -pe -extrap 2.1e9 -step 1e8 -seg_len 1000000000 -output {q(dirs['stats'] / ('comp_' + sample + '.txt'))} {q(undedup_pt_bam)}",
+        f"preseq lc_extrap -bam -pe -extrap 2.1e9 -step 1e8 -seg_len 1000000000 -output {q(outputs.preseq)} {q(undedup_pt_bam)}",
         f"rm {q(undedup_pt_bam)}",
-        f"pairtools dedup --nproc-in {threads} --nproc-out {threads} --mark-dups --output-stats {q(dirs['stats'] / (sample + '.txt'))} --output {q(dedup_pairsam)} {q(sorted_pairsam)}",
+        f"pairtools dedup --nproc-in {threads} --nproc-out {threads} --mark-dups --output-stats {q(outputs.pairtools_stats)} --output {q(dedup_pairsam)} {q(sorted_pairsam)}",
         f"rm {q(sorted_pairsam)}",
-        f"python3 {q(get_qc)} -p {q(dirs['stats'] / (sample + '.txt'))} > {q(dirs['qc'] / ('qc_' + sample + '.txt'))}",
+        f"python3 {q(get_qc)} -p {q(outputs.pairtools_stats)} --format tsv > {q(outputs.qc_tsv)}",
         f"pairtools split --nproc-in {threads} --nproc-out {threads} --output-pairs {q(pairs)} --output-sam {q(raw_bam)} {q(dedup_pairsam)}",
         f"rm {q(dedup_pairsam)}",
         f"samtools sort -@ {threads} -T {q(raw_bam)} -o {q(final_bam)} {q(raw_bam)}",
@@ -178,7 +254,7 @@ def workflow_commands(config: PipelineConfig, dirs: dict[str, Path], chrom_sizes
         f"samtools index {q(final_bam)}",
     ]
     if config.outputs.make_hic:
-        commands.append(f"juicer_tools pre -j {threads} {q(pairs)} {q(dirs['hic'] / (sample + '.hic'))} {q(config.genome.name)}")
+        commands.append(f"juicer_tools pre -j {threads} {q(pairs)} {q(outputs.hic)} {q(config.genome.name)}")
     commands.extend(
         [
             f"bgzip {q(pairs)}",
@@ -187,7 +263,7 @@ def workflow_commands(config: PipelineConfig, dirs: dict[str, Path], chrom_sizes
         ]
     )
     if config.outputs.make_mcool:
-        commands.append(f"cooler zoomify -p {threads} {q(cool)}")
+        commands.append(f"cooler zoomify -p {threads} -o {q(outputs.mcool)} {q(cool)}")
     if not config.outputs.keep_bam:
         commands.append(f"rm -f {q(final_bam)} {q(final_bai)}")
     return commands
@@ -208,12 +284,36 @@ def print_plan(config: PipelineConfig, chrom_commands: list[str], commands: list
     print(f"Threads: {config.threads}")
     if len(config.bin_sizes) > 1:
         print(
-            "Warning: v0.4.0 uses only the first configured bin size for .cool generation: "
+            "Warning: v0.5.1 uses only the first configured bin size for .cool generation: "
             f"{config.bin_sizes[0]}"
         )
     print("Planned commands:")
     for command in [*chrom_commands, *commands]:
         print(command)
+    print("Expected final outputs:")
+    for name, path in final_output_paths(config).items():
+        print(f"{name}: {path}")
+    print("Planned validation checks:")
+    for check in validation_checks(config):
+        print(f"- {check}")
+
+
+def write_output_manifest(config: PipelineConfig, validation_results: dict[str, dict[str, object]] | None = None) -> None:
+    manifest_path = final_outputs(config).output_manifest
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(
+        json.dumps(build_manifest(config, validation_results), indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def validate_and_write_manifest(config: PipelineConfig) -> None:
+    try:
+        results = validate_outputs(config)
+    except OutputValidationError as exc:
+        write_output_manifest(config, exc.results)
+        raise RunnerError(str(exc)) from exc
+    write_output_manifest(config, results)
 
 
 def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
@@ -222,6 +322,7 @@ def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
         dirs = dry_dirs
     else:
         check_dependencies(config)
+        validate_bwa_index(config)
         dirs = ensure_output_dirs(config)
     chrom_sizes, chrom_commands = derive_chrom_sizes(config, dirs, dry_run=dry_run)
     commands = workflow_commands(config, dirs, chrom_sizes)
@@ -231,8 +332,14 @@ def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
         print_plan(config, chrom_commands, commands)
         return
 
-    metadata = build_metadata(config, chrom_sizes, all_commands, dry_run=False)
-    metadata_path = config.sample_output_dir / "run_metadata.json"
+    metadata = build_metadata(
+        config,
+        chrom_sizes,
+        all_commands,
+        dry_run=False,
+        tool_versions=collect_tool_versions(config),
+    )
+    metadata_path = final_outputs(config).run_metadata
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
 
     log_path = dirs["logs"] / f"{config.sample}.log"
@@ -244,7 +351,7 @@ def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
         print(f"Threads: {config.threads}", file=log_handle)
         if len(config.bin_sizes) > 1:
             print(
-                "Warning: v0.4.0 uses only the first configured bin size for .cool generation: "
+                "Warning: v0.5.1 uses only the first configured bin size for .cool generation: "
                 f"{config.bin_sizes[0]}",
                 file=log_handle,
             )
@@ -252,6 +359,13 @@ def run_pipeline(config: PipelineConfig, *, dry_run: bool = False) -> None:
             print(f"$ {command}", file=log_handle, flush=True)
         for command in commands:
             run_shell(command, log_handle=log_handle)
+
+    validate_and_write_manifest(config)
+
+
+def validate_preflight_inputs(config: PipelineConfig) -> None:
+    validate_chrom_sizes_feasibility(config)
+    validate_bwa_index(config)
 
 
 def validate_chrom_sizes_feasibility(config: PipelineConfig) -> None:

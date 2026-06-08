@@ -1,8 +1,9 @@
-"""Configuration loading and validation for the v0.4.0 single-sample runner."""
+"""Configuration loading and validation for the v0.5.1 single-sample runner."""
 
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -44,6 +45,16 @@ class PipelineConfig:
 
 _MISSING = object()
 
+SAMPLE_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+
+def _validate_sample_name(sample: str) -> None:
+    if not SAMPLE_NAME_PATTERN.fullmatch(sample):
+        raise ConfigError(
+            "Invalid config field sample: expected letters, numbers, dots, underscores, "
+            "or hyphens, starting with a letter or number."
+        )
+
 
 def _strip_comment(line: str) -> str:
     in_single = False
@@ -81,7 +92,7 @@ def _parse_scalar(value: str) -> Any:
 
 
 def _parse_simple_yaml(text: str) -> dict[str, Any]:
-    """Parse the small YAML subset used by the documented v0.4.0 config.
+    """Parse the small YAML subset used by the documented v0.5.1 config.
 
     This intentionally supports mappings, nested mappings, scalar values, and
     lists of scalar values so the runner does not need an external Python YAML
@@ -201,9 +212,10 @@ def parse_and_validate_config(
         raise ConfigError("Config root must be a mapping.")
 
     sample = _require_string(_get_required(raw, "sample"), "sample")
+    _validate_sample_name(sample)
     assay = _require_string(_get_optional(raw, "assay", "microc"), "assay")
     if assay != "microc":
-        raise ConfigError(f"Unsupported assay: {assay}. v0.4.0 supports only assay: microc.")
+        raise ConfigError(f"Unsupported assay: {assay}. v0.5.1 supports only assay: microc.")
 
     fastq_r1 = _resolve_path(_get_required(raw, "fastq.r1"), "fastq.r1")
     fastq_r2 = _resolve_path(_get_required(raw, "fastq.r2"), "fastq.r2")

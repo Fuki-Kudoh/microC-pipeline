@@ -205,6 +205,7 @@ results/SAMPLE/
   cool/SAMPLE.mcool
   hic/SAMPLE.hic
   stats/SAMPLE.pairtools.stats.txt
+  stats/SAMPLE.preseq.lc_extrap.txt
   qc/SAMPLE.qc.tsv
 ```
 
@@ -216,19 +217,31 @@ results/SAMPLE/
   bam/SAMPLE.PT.bam.bai
 ```
 
-Planned tasks:
+Completed v0.5.0 tasks:
 
-- Standardize valid pairs output naming.
-- Ensure valid pairs are BGZF-compressed and pairix-indexed.
-- Add output validation for pairs, pairix index, cool, mcool, and hic where feasible.
-- Add optional BAM retention via config.
-- Document all outputs in `docs/outputs.md`.
+- [x] Standardized valid pairs output naming as `pairs/SAMPLE.valid.pairs.gz`.
+- [x] Ensured valid pairs are BGZF-compressed and pairix-indexed as `pairs/SAMPLE.valid.pairs.gz.px2`.
+- [x] Added output validation for pairs, pairix index, cool, mcool, hic, stats, QC TSV, and optional BAM where feasible.
+- [x] Added optional BAM retention via `outputs.keep_bam`.
+- [x] Documented all standardized outputs, validation checks, and the manifest schema in `docs/outputs.md`.
 
 Expected status after this milestone:
 
 ```text
 The pipeline has clear, validated, documented final outputs.
 ```
+
+### Milestone v0.5.1: preflight and reproducibility hardening
+
+Completed v0.5.1 tasks:
+
+- [x] Added safe sample name validation.
+- [x] Added BWA index preflight validation.
+- [x] Added best-effort tool version collection in `run_metadata.json`.
+- [x] Removed minor unreachable/overly-local implementation details without changing core processing commands.
+
+This patch does not add restartable chunking, multi-sample support, workflow-manager support, or full QC reports.
+
 
 ## Milestone v0.6.0: restartable chunk engine
 
