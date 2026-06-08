@@ -55,9 +55,9 @@ The v1.0.0 release should be built around the following principles.
    - The pipeline should not only produce contact files, but also help decide whether a library is usable.
    - QC should summarize mapping, duplication, valid pairs, cis/trans balance, distance decay, and matrix-level properties.
 
-6. **Micro-C / Hi-C compatibility**
-   - The workflow should support Micro-C and Hi-C-like paired-end proximity ligation data.
-   - Enzyme/restriction-fragment assumptions should be explicit and configurable.
+6. **Micro-C first, with future Hi-C compatibility considered carefully**
+   - The current workflow should remain Micro-C-oriented by default.
+   - Any future Hi-C-specific assumptions should be documented explicitly and added only in a later milestone.
 
 ## Relationship to HiC-Nap
 
@@ -136,43 +136,59 @@ The project has a clear identity: legacy script retained, modern pipeline planne
 
 ## Milestone v0.4.0: config-driven single-sample workflow
 
-Goal: remove hard-coded sample naming and path assumptions.
+Goal: remove hard-coded sample naming and path assumptions for one Micro-C sample.
 
-Planned tasks:
+Completed tasks:
 
-- Add a config file format, for example `config.yaml`.
-- Add support for explicit FASTQ paths.
-- Add configurable genome name, FASTA, chrom sizes, enzyme, bin sizes, and output directory.
-- Add a dry-run or command-printing mode.
-- Add structured run metadata output.
-- Keep a single-sample mode as the simplest supported workflow.
+- [x] Add the `bin/microc-pipeline` executable entrypoint.
+- [x] Add a single-sample YAML config format.
+- [x] Add `config/example.single-sample.yaml` without restriction enzyme settings.
+- [x] Add support for explicit `fastq.r1` and `fastq.r2` paths.
+- [x] Add configurable genome name, FASTA, optional chromosome sizes, bin sizes, threads, output directory, and output toggles.
+- [x] Default `assay` to `microc` and reject unsupported assay values.
+- [x] Add config validation with clear missing-field, type, assay, and missing-file errors.
+- [x] Add dry-run command printing.
+- [x] Add per-sample output directory handling under `output_dir/sample`.
+- [x] Add structured run metadata for real runs.
+- [x] Keep the retained legacy `mdp.sh` script available and documented.
 
-Example future config:
+Explicit non-goals for v0.4.0:
+
+- [ ] Multi-sample sample-sheet execution.
+- [ ] Restartable chunk-based execution.
+- [ ] Snakemake or Nextflow workflow-manager implementation.
+- [ ] Containers or CI.
+- [ ] Full HTML QC reports or project-level QC summaries.
+- [ ] Restriction-fragment-aware Hi-C behavior, restriction fragment generation, or `pairtools restrict`.
+
+Example current config:
 
 ```yaml
 sample: SAMPLE_ID
-fastq1: fastq/SAMPLE_R1.fastq.gz
-fastq2: fastq/SAMPLE_R2.fastq.gz
-genome_name: mm10
-genome_fasta: /path/to/mm10.fa
-enzyme: MboI
+assay: microc
+fastq:
+  r1: fastq/SAMPLE_R1.fastq.gz
+  r2: fastq/SAMPLE_R2.fastq.gz
+genome:
+  name: mm10
+  fasta: /path/to/mm10.fa
+  chrom_sizes: null
 threads: 16
 bin_sizes:
   - 1000
-  - 5000
-  - 10000
-  - 25000
-  - 100000
+output_dir: results
 outputs:
-  keep_bam: false
+  keep_bam: true
   make_hic: true
   make_mcool: true
 ```
 
+The v0.4.0 workflow is Micro-C-oriented and does not require restriction enzyme information. Restriction-fragment-aware Hi-C behavior may be considered in a future milestone, but it is not implemented now.
+
 Expected status after this milestone:
 
 ```text
-Users can run a single sample without editing the script itself.
+Users can run a single Micro-C sample without editing the legacy script itself.
 ```
 
 ## Milestone v0.5.0: valid pairs and matrix outputs as first-class products
@@ -226,7 +242,7 @@ Planned tasks:
   - alignment
   - pairtools parse
   - pairtools sort
-  - pairtools restrict/select when appropriate
+  - pairtools parse/sort-compatible selection steps when appropriate
 - Add per-chunk status files.
 - Add conservative restart behavior.
 - Add global merge and global deduplication.
@@ -287,7 +303,7 @@ Goal: support project-scale processing.
 Planned tasks:
 
 - Add sample sheet support.
-- Allow per-sample FASTQ, genome, enzyme, and condition metadata.
+- Allow per-sample FASTQ, genome, assay, and condition metadata.
 - Process failed samples independently on rerun.
 - Generate project-level QC summary.
 - Add optional grouping by condition or batch.
@@ -295,10 +311,10 @@ Planned tasks:
 Example sample sheet:
 
 ```csv
-sample,fastq1,fastq2,genome,enzyme,condition
-WT_rep1,fastq/WT1_R1.fastq.gz,fastq/WT1_R2.fastq.gz,mm10,MboI,WT
-WT_rep2,fastq/WT2_R1.fastq.gz,fastq/WT2_R2.fastq.gz,mm10,MboI,WT
-DS_rep1,fastq/DS1_R1.fastq.gz,fastq/DS1_R2.fastq.gz,mm10,MboI,DS
+sample,fastq1,fastq2,genome,assay,condition
+WT_rep1,fastq/WT1_R1.fastq.gz,fastq/WT1_R2.fastq.gz,mm10,microc,WT
+WT_rep2,fastq/WT2_R1.fastq.gz,fastq/WT2_R2.fastq.gz,mm10,microc,WT
+DS_rep1,fastq/DS1_R1.fastq.gz,fastq/DS1_R2.fastq.gz,mm10,microc,DS
 ```
 
 Expected status after this milestone:

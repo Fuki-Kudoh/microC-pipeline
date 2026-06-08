@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.4.0 - Unreleased
+
+### Added
+- Added a config-driven single-sample Micro-C runner at `bin/microc-pipeline`.
+- Added `config/example.single-sample.yaml` as an example single-sample YAML config without restriction enzyme settings.
+- Added config validation for required fields, value types, unsupported assay values, and missing input files.
+- Added dry-run mode to print planned commands without running external tools.
+- Added per-sample output directory handling under `output_dir/sample`.
+- Added structured `run_metadata.json` output for real runs.
+- Added `docs/configuration.md` for the v0.4.0 config format and runner behavior.
+
+### Changed
+- Updated README, design notes, output documentation, roadmap, and configuration directory notes for the v0.4.0 single-sample interface.
+- Clarified that the default Micro-C workflow does not require restriction enzyme information.
+
+### Notes
+- Restriction-fragment-aware Hi-C behavior, restriction fragment generation, and `pairtools restrict` are not implemented in v0.4.0.
+- Multi-sample execution, restartable chunk processing, workflow-manager files, containers, CI, and full QC reports remain future work.
+
 ## v0.3.0 - Unreleased
 
 ### Added
