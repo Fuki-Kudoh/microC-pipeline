@@ -108,16 +108,25 @@ microC-pipeline is public-safe and useful as a documented legacy Slurm script.
 
 Goal: prepare the repository for active development toward v1.0.0.
 
-Planned tasks:
+Completed project structure and identity tasks:
 
-- Add `CHANGELOG.md`.
-- Add `docs/` with design notes and output specifications.
-- Move the current `mdp.sh` into `legacy/` or explicitly label it as legacy in place.
-- Add a modern entrypoint plan, for example `bin/microc-pipeline`.
-- Add `config/` examples.
-- Add `examples/` with tiny synthetic or documented toy inputs.
-- Define repository topics and description on GitHub.
-- Decide whether the main engine will be Bash-first, Snakemake, or Nextflow.
+- [x] Add a `v0.3.0 - Unreleased` changelog section.
+- [x] Add `docs/design.md` with design notes and engine-decision status.
+- [x] Add `docs/outputs.md` with current legacy output notes and planned output-documentation direction.
+- [x] Explicitly label `mdp.sh` as the retained legacy/minimal Slurm script in public-facing documentation.
+- [x] Add `config/README.md` as a placeholder for future configuration examples and schemas.
+- [x] Add `examples/README.md` as a placeholder for future tiny synthetic examples.
+- [x] Document that Bash-first, Snakemake, and Nextflow remain candidate future engine directions.
+- [x] Document that HiC-Nap restartable chunk-processing concepts are planning inputs for future development.
+
+Remaining or future tasks, not completed in this milestone:
+
+- [ ] Add a modern executable entrypoint, for example `bin/microc-pipeline`.
+- [ ] Define GitHub repository topics and description.
+- [ ] Make a final production engine choice if project ownership gives that direction.
+- [ ] Implement the modern pipeline engine.
+- [ ] Implement restartable chunk-based execution.
+- [ ] Implement sample-sheet execution, workflow-manager files, containers, CI, or full QC reports.
 
 Expected status after this milestone:
 
