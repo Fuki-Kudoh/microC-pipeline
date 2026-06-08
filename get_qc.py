@@ -1,62 +1,112 @@
 #!/usr/bin/env python3
 
 import argparse
-from tabulate import tabulate
+import sys
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-p', help="Pairtools stat output")
 
-args = parser.parse_args()
+REQUIRED_KEYS = (
+    "total",
+    "total_unmapped",
+    "total_mapped",
+    "total_dups",
+    "total_nodups",
+    "cis",
+    "trans",
+    "cis_1kb+",
+    "cis_10kb+",
+)
 
-output_dict = {}
-with open(args.p, 'r') as f:
-    for line in f:
-        attrs = line.split()
-        output_dict[attrs[0]] = attrs[1]
 
-table = []
-total_reads = int(output_dict["total"])
-total_reads_str = format(total_reads, ",d")
-table.append(["Total Read Pairs", total_reads_str, "100%"])
-unmapped_reads = int(output_dict["total_unmapped"])
-percent_unmapped = round(unmapped_reads * 100.0 / total_reads, 2)
-unmapped_reads = format(unmapped_reads, ",d")
-table.append(["Unmapped Read Pairs", unmapped_reads, f"{percent_unmapped}%"])
-mapped_reads = int(output_dict["total_mapped"])
-percent_mapped = round(mapped_reads * 100.0 / total_reads, 2)
-mapped_reads_str = format(mapped_reads, ",d")
-table.append(["Mapped Read Pairs", mapped_reads_str, f"{percent_mapped}%"])
-dup_reads = int(output_dict["total_dups"])
-percent_dups = round(dup_reads * 100.0 / total_reads, 2)
-dup_reads = format(dup_reads, ",d")
-table.append(["PCR Dup Read Pairs", dup_reads, f"{percent_dups}%"])
-nodup_reads = int(output_dict["total_nodups"])
-percent_nodups = round(nodup_reads * 100.0 / total_reads, 2)
-nodup_reads_str = format(nodup_reads, ",d")
-table.append(["No-Dup Read Pairs", nodup_reads_str, f"{percent_nodups}%"])
-cis_reads = int(output_dict["cis"])
-percent_cis = round(cis_reads * 100.0 / nodup_reads, 2)
-cis_reads_str = format(cis_reads, ",d")
-table.append(["No-Dup Cis Read Pairs", cis_reads_str, f"{percent_cis}%"])
-trans_reads = int(output_dict["trans"])
-percent_trans = round(trans_reads * 100.0 / nodup_reads, 2)
-trans_reads = format(trans_reads, ",d")
-table.append(["No-Dup Trans Read Pairs", trans_reads, f"{percent_trans}%"])
-cis_gt1kb = int(output_dict["cis_1kb+"])
-cis_lt1kb = cis_reads - cis_gt1kb
-percent_cis_lt1kb = round(cis_lt1kb * 100.0 / nodup_reads, 2)
-percent_cis_gt1kb = round(cis_gt1kb * 100.0 / nodup_reads, 2)
-cis_gt1kb = format(cis_gt1kb, ",d")
-cis_lt1kb = format(cis_lt1kb, ",d")
-valid_read_pairs = int(output_dict["trans"]) + int(output_dict["cis_1kb+"])
-percent_valid_read_pairs = round(valid_read_pairs * 100.0 / nodup_reads, 2)
-valid_read_pairs = format(valid_read_pairs, ",d")
-table.append(["No-Dup Valid Read Pairs (cis >= 1kb + trans)", valid_read_pairs, f"{percent_valid_read_pairs}%"])
-table.append(["No-Dup Cis Read Pairs < 1kb", cis_lt1kb, f"{percent_cis_lt1kb}%"])
-table.append(["No-Dup Cis Read Pairs >= 1kb", cis_gt1kb, f"{percent_cis_gt1kb}%"])
-cis_gt10kb = int(output_dict["cis_10kb+"])
-percent_cis_gt10kb = round(cis_gt10kb * 100.0 / nodup_reads, 2)
-cis_gt10kb = format(cis_gt10kb, ",d")
-table.append(["No-Dup Cis Read Pairs >= 10kb", cis_gt10kb, f"{percent_cis_gt10kb}%"])
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Create a compact text QC summary from pairtools stats output."
+    )
+    parser.add_argument(
+        "-p",
+        "--pairtools-stats",
+        required=True,
+        help="Pairtools stats output file, for example stats/SAMPLE.txt",
+    )
+    return parser.parse_args()
 
-print(tabulate(table, tablefmt="plain"))
+
+def read_stats(path):
+    output_dict = {}
+    with open(path, "r", encoding="utf-8") as handle:
+        for line in handle:
+            attrs = line.split()
+            if len(attrs) >= 2:
+                output_dict[attrs[0]] = attrs[1]
+    return output_dict
+
+
+def require_int(stats, key):
+    try:
+        return int(stats[key])
+    except KeyError:
+        print(f"Missing required pairtools stats key: {key}", file=sys.stderr)
+        sys.exit(1)
+    except ValueError:
+        print(f"Pairtools stats key is not an integer: {key}={stats[key]}", file=sys.stderr)
+        sys.exit(1)
+
+
+def percent(numerator, denominator):
+    if denominator == 0:
+        return "NA"
+    return f"{round(numerator * 100.0 / denominator, 2)}%"
+
+
+def print_table(table):
+    widths = [max(len(row[index]) for row in table) for index in range(3)]
+    for row in table:
+        print("  ".join(value.ljust(widths[index]) for index, value in enumerate(row)))
+
+
+def main():
+    args = parse_args()
+    stats = read_stats(args.pairtools_stats)
+
+    missing_keys = [key for key in REQUIRED_KEYS if key not in stats]
+    if missing_keys:
+        print(
+            "Missing required pairtools stats keys: " + ", ".join(missing_keys),
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    total_reads = require_int(stats, "total")
+    unmapped_reads = require_int(stats, "total_unmapped")
+    mapped_reads = require_int(stats, "total_mapped")
+    dup_reads = require_int(stats, "total_dups")
+    nodup_reads = require_int(stats, "total_nodups")
+    cis_reads = require_int(stats, "cis")
+    trans_reads = require_int(stats, "trans")
+    cis_gt1kb = require_int(stats, "cis_1kb+")
+    cis_gt10kb = require_int(stats, "cis_10kb+")
+
+    cis_lt1kb = cis_reads - cis_gt1kb
+    valid_read_pairs = trans_reads + cis_gt1kb
+
+    table = [
+        ["Total Read Pairs", format(total_reads, ",d"), "100%" if total_reads else "NA"],
+        ["Unmapped Read Pairs", format(unmapped_reads, ",d"), percent(unmapped_reads, total_reads)],
+        ["Mapped Read Pairs", format(mapped_reads, ",d"), percent(mapped_reads, total_reads)],
+        ["PCR Dup Read Pairs", format(dup_reads, ",d"), percent(dup_reads, total_reads)],
+        ["No-Dup Read Pairs", format(nodup_reads, ",d"), percent(nodup_reads, total_reads)],
+        ["No-Dup Cis Read Pairs", format(cis_reads, ",d"), percent(cis_reads, nodup_reads)],
+        ["No-Dup Trans Read Pairs", format(trans_reads, ",d"), percent(trans_reads, nodup_reads)],
+        [
+            "No-Dup Valid Read Pairs (cis >= 1kb + trans)",
+            format(valid_read_pairs, ",d"),
+            percent(valid_read_pairs, nodup_reads),
+        ],
+        ["No-Dup Cis Read Pairs < 1kb", format(cis_lt1kb, ",d"), percent(cis_lt1kb, nodup_reads)],
+        ["No-Dup Cis Read Pairs >= 1kb", format(cis_gt1kb, ",d"), percent(cis_gt1kb, nodup_reads)],
+        ["No-Dup Cis Read Pairs >= 10kb", format(cis_gt10kb, ",d"), percent(cis_gt10kb, nodup_reads)],
+    ]
+    print_table(table)
+
+
+if __name__ == "__main__":
+    main()
