@@ -70,6 +70,7 @@ fastq_r2="fastq/${sample_ID}_R2_001.fastq.gz"
 trimmed_r1="fastq/${sample_ID}_R1_001_val_1.fq.gz"
 trimmed_r2="fastq/${sample_ID}_R2_001_val_2.fq.gz"
 chrom_sizes="genome/${genome_name}.chrom.sizes"
+genome_fai="${genome}.fai"
 
 if [[ ! -f "${fastq_r1}" ]]; then
     echo "R1 FASTQ not found: ${fastq_r1}" >&2
@@ -86,8 +87,18 @@ exec > >(tee -a "logs/${sample_ID}.log") 2>&1
 
 printf 'Sample: %s\nGenome name: %s\nGenome FASTA: %s\nThreads: %s\n' "${sample_ID}" "${genome_name}" "${genome}" "${THREADS}"
 
-samtools faidx "${genome}"
-cut -f1,2 "${genome}.fai" > "${chrom_sizes}"
+if [[ ! -s "${genome_fai}" ]]; then
+    genome_dir="$(dirname "${genome}")"
+    if [[ -w "${genome_dir}" ]]; then
+        samtools faidx "${genome}"
+    else
+        echo "FASTA index not found or empty: ${genome_fai}" >&2
+        echo "The FASTA directory is not writable: ${genome_dir}" >&2
+        echo "Please create the FASTA index first with: samtools faidx '${genome}'" >&2
+        exit 1
+    fi
+fi
+cut -f1,2 "${genome_fai}" > "${chrom_sizes}"
 
 fastqc -t "${THREADS}" -o fastqc/ "${fastq_r1}" "${fastq_r2}"
 trim_galore -j "${THREADS}" -o fastq --paired "${fastq_r1}" "${fastq_r2}"

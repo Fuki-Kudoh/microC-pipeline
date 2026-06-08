@@ -70,7 +70,7 @@ Install and configure dependencies before submitting a job. The script checks fo
 - `cooler`
 - `python3`
 
-The required genome FASTA should already have any aligner indexes needed by BWA. `mdp.sh` runs `samtools faidx` on the FASTA and derives `genome/{GENOME_NAME}.chrom.sizes` from the FASTA index for Pairtools and Cooler.
+The required genome FASTA should already have any aligner indexes needed by BWA. `GENOME_FASTA` should also have an existing non-empty `.fai` index, or the directory containing `GENOME_FASTA` must be writable so `mdp.sh` can create the index with `samtools faidx`. The script derives `genome/{GENOME_NAME}.chrom.sizes` from that FASTA index for Pairtools and Cooler.
 
 ### HPC modules are site-specific
 
