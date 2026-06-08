@@ -2,7 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## v0.2.0 - 2026-06-08
+## v0.3.0 - Unreleased
+
+### Added
+- Added planning documentation for the future project design, expected outputs, configuration area, and examples area.
+- Documented the current engine decision status: `mdp.sh` remains the retained legacy script, while Bash-first, Snakemake, and Nextflow remain candidate future directions.
+
+### Changed
+- Updated README repository contents and project identity language for the next public-facing milestone.
+- Updated the roadmap to reflect completed v0.3.0 project structure and identity work without marking future engine implementation tasks complete.
+
+### Notes
+- The modern production-facing pipeline engine is planned but not implemented in this milestone.
+- Restartable chunk-based execution, sample-sheet execution, containers, CI, and full QC reports remain future work.
+
+## v0.2.0 milestone - not tagged
 
 ### Added
 - Added MIT license.
@@ -17,5 +31,7 @@ All notable changes to this project will be documented in this file.
 - Improved argument parsing and error handling in `get_qc.py`.
 
 ### Notes
-- This release preserves the legacy single-sample script model.
+- This was an internal cleanup milestone before active `v0.3.0` development.
+- No Git tag or GitHub Release was created for this milestone.
+- This milestone preserves the legacy single-sample script model.
 - Restartable chunk-based processing is planned for a future milestone and should not be treated as part of v0.2.0.

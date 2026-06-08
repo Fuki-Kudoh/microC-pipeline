@@ -1,8 +1,8 @@
 # microC-pipeline
 
-`microC-pipeline` is a legacy/minimal Slurm-based Micro-C preprocessing workflow. The repository is intentionally small and centers on one shell script, `mdp.sh`, plus a lightweight Pairtools-stats summarizer, `get_qc.py`.
+`microC-pipeline` currently contains a legacy/minimal Slurm-based Micro-C preprocessing workflow. The repository is being prepared for future development toward a production-facing pipeline, but the modern engine is planned only and is not implemented yet.
 
-Active, restartable development has moved to **HiC-Nap**. This repository is retained as a compact legacy workflow for users who want a simple Slurm script that can be inspected and adapted for an HPC site.
+The retained runnable workflow centers on one shell script, `mdp.sh`, plus a lightweight Pairtools-stats summarizer, `get_qc.py`. Users should not expect restartable chunk-based execution, sample-sheet orchestration, containers, or a packaged workflow-manager pipeline from the current code.
 
 ## What this repository does
 
@@ -18,14 +18,22 @@ For a single sample, `mdp.sh` runs a classic Micro-C preprocessing path:
 8. `.pairs.gz`, `.cool`, and `.mcool` generation with Pairix and Cooler.
 9. A small text QC summary from Pairtools stats using `get_qc.py`.
 
-This is **not** a modern, restartable workflow manager pipeline. It does not include sample-sheet orchestration, containers, continuous integration, or a packaged software environment.
+This is **not** a modern, restartable workflow manager pipeline. It does not include restartable chunk-based execution, sample-sheet orchestration, containers, continuous integration, full QC reports, or a packaged software environment.
 
 ## Repository contents
 
 ```text
-README.md   Project overview and usage notes
-mdp.sh      Legacy/minimal Slurm Micro-C preprocessing script
-get_qc.py   Small Pairtools-stats QC text summarizer
+README.md           Project overview and usage notes
+mdp.sh              Legacy/minimal Slurm Micro-C preprocessing script
+get_qc.py           Small Pairtools-stats QC text summarizer
+CHANGELOG.md        Repository-level change history
+LICENSE             MIT license
+docs/roadmap.md     Development roadmap toward a production-grade pipeline
+docs/design.md      Planning notes for future pipeline design
+docs/outputs.md     Current and planned output documentation notes
+config/README.md    Placeholder for future configuration examples
+examples/README.md  Placeholder for future tiny synthetic examples
+.gitignore          Ignore rules for large genomics outputs and local files
 ```
 
 ## Expected input and output layout
@@ -121,6 +129,8 @@ You can rerun that command manually after a completed or partially completed run
 ## Notes and limitations
 
 - This is a legacy/minimal Slurm script, not a fully restartable production workflow.
+- The repository is being prepared for future development, but the future production-facing pipeline is not implemented yet.
+- Restartable chunk-based execution is not available in the current code.
 - Paths and FASTQ naming are intentionally simple and historical.
 - Intermediate files may be removed after downstream files are created, matching the previous script behavior.
 - Module names and dependency installation are intentionally left to each HPC site.
@@ -131,4 +141,4 @@ You can rerun that command manually after a completed or partially completed run
 
 Legacy script version history is retained in comments at the bottom of `mdp.sh`. Repository-level release history is tracked in `CHANGELOG.md`.
 
-The `v0.2.0` release is a repository-polish release for the legacy/minimal Slurm workflow. It does not make this repository a fully restartable workflow manager pipeline.
+The `v0.2.0` milestone was an internal, untagged repository-polish milestone for the legacy/minimal Slurm workflow. The next public-facing milestone is `v0.3.0`, focused on project structure and identity. It does not make this repository a fully restartable workflow manager pipeline.
