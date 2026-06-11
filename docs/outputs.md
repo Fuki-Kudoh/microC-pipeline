@@ -7,7 +7,7 @@ This document describes the v0.5.0 standardized output layout for the config-dri
 The v0.5.0 output standardization applies to:
 
 ```bash
-bin/microc-pipeline run --config config/example.single-sample.yaml
+bin/wulf3c run --config config/example.single-sample.yaml
 ```
 
 It does not change the retained legacy `mdp.sh` output layout.
@@ -74,7 +74,7 @@ Examples include trimmed FASTQs, SAM, Pairtools `.pairsam` intermediates, undedu
 A real `run` validates expected final outputs before printing success. The same checks can be run against an existing output directory without rerunning preprocessing:
 
 ```bash
-bin/microc-pipeline validate-outputs --config config/example.single-sample.yaml
+bin/wulf3c validate-outputs --config config/example.single-sample.yaml
 ```
 
 Validation is intentionally lightweight and conservative. It checks file presence, non-empty sizes, and small format indicators needed by this repository. It does not prove biological correctness.

@@ -9,7 +9,7 @@
 The preferred interface is:
 
 ```bash
-bin/microc-pipeline run --config config/example.single-sample.yaml
+bin/wulf3c run --config config/example.single-sample.yaml
 ```
 
 The retained legacy interface remains available for backward compatibility:
@@ -44,7 +44,8 @@ The default workflow is Micro-C-oriented. No restriction enzyme is required, the
 
 ```text
 README.md                         Project overview and usage notes
-bin/microc-pipeline               v0.5.1 config-driven single-sample CLI
+bin/wulf3c                       v0.5.1 config-driven single-sample CLI
+bin/microc-pipeline              Deprecated compatibility wrapper for older command examples
 microc_pipeline/                  Python package for config, output paths, validation, and command execution
 config/example.single-sample.yaml Example single-sample Micro-C config
 config/README.md                  Configuration directory notes
@@ -87,25 +88,25 @@ outputs:
 Validate a config:
 
 ```bash
-bin/microc-pipeline validate-config --config config/example.single-sample.yaml
+bin/wulf3c validate-config --config config/example.single-sample.yaml
 ```
 
 Print planned commands, expected final outputs, and planned validation checks without running external tools:
 
 ```bash
-bin/microc-pipeline run --config config/example.single-sample.yaml --dry-run
+bin/wulf3c run --config config/example.single-sample.yaml --dry-run
 ```
 
 Run one sample:
 
 ```bash
-bin/microc-pipeline run --config config/example.single-sample.yaml
+bin/wulf3c run --config config/example.single-sample.yaml
 ```
 
 Validate outputs from an existing completed run without rerunning preprocessing. This command does not require original FASTQs or genome FASTA resources to still exist:
 
 ```bash
-bin/microc-pipeline validate-outputs --config config/example.single-sample.yaml
+bin/wulf3c validate-outputs --config config/example.single-sample.yaml
 ```
 
 See `docs/configuration.md` for required fields, defaults, dry-run behavior, genome FASTA index handling, output toggles, and current limitations.

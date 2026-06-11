@@ -1,4 +1,4 @@
-"""CLI for the v0.5.0 config-driven single-sample Micro-C runner."""
+"""CLI for the Wulf3C config-driven single-sample Micro-C runner."""
 
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ from .runner import (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="microc-pipeline",
-        description="Lightweight config-driven single-sample Micro-C preprocessing runner.",
+        prog="wulf3c",
+        description="Wulf3C lightweight config-driven single-sample Micro-C preprocessing runner.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

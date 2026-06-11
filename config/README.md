@@ -7,13 +7,13 @@ This directory contains example configuration files for the lightweight config-d
 Validate a config before launching a full run:
 
 ```bash
-bin/microc-pipeline validate-config --config config/example.single-sample.yaml
+bin/wulf3c validate-config --config config/example.single-sample.yaml
 ```
 
 Print the planned command sequence without running external tools:
 
 ```bash
-bin/microc-pipeline run --config config/example.single-sample.yaml --dry-run
+bin/wulf3c run --config config/example.single-sample.yaml --dry-run
 ```
 
 The default v0.4.0 workflow is Micro-C-oriented and does not require restriction enzyme information.

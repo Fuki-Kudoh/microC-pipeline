@@ -3,19 +3,19 @@
 The config-driven runner accepts one YAML file for one Micro-C sample:
 
 ```bash
-bin/microc-pipeline run --config config/example.single-sample.yaml
+bin/wulf3c run --config config/example.single-sample.yaml
 ```
 
 Validate configuration without running preprocessing:
 
 ```bash
-bin/microc-pipeline validate-config --config config/example.single-sample.yaml
+bin/wulf3c validate-config --config config/example.single-sample.yaml
 ```
 
 Validate outputs from an existing completed run. This command uses the config only to infer expected output paths and toggles, so it does not require the original FASTQs, genome FASTA, or BWA index sidecars to still be present:
 
 ```bash
-bin/microc-pipeline validate-outputs --config config/example.single-sample.yaml
+bin/wulf3c validate-outputs --config config/example.single-sample.yaml
 ```
 
 ## Example
@@ -76,7 +76,7 @@ Always-required final outputs are the BGZF-compressed valid pairs file, Pairix i
 Dry-run mode validates the config and BWA index preflight, then prints planned commands, expected final outputs, and planned validation checks without running external tools:
 
 ```bash
-bin/microc-pipeline run --config config/example.single-sample.yaml --dry-run
+bin/wulf3c run --config config/example.single-sample.yaml --dry-run
 ```
 
 Dry-run mode is intended for inspection. It may create no files at all.

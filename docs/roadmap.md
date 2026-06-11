@@ -1,8 +1,8 @@
-# microC-pipeline roadmap
+# Wulf3C roadmap
 
 This roadmap describes the intended path from the current legacy/minimal Slurm script toward a production-grade Micro-C / Hi-C preprocessing pipeline.
 
-The long-term goal is to make `microC-pipeline` a restartable, reproducible, inspectable workflow that takes paired-end FASTQ files to validated contact files, contact matrices, and QC reports.
+The long-term goal is to make `Wulf3C` a restartable, reproducible, inspectable workflow that takes paired-end FASTQ files to validated contact files, contact matrices, and QC reports.
 
 > Working vision: **A restartable, reproducible Micro-C/Hi-C preprocessing pipeline from FASTQ to contact maps and QC reports.**
 
@@ -61,16 +61,16 @@ The v1.0.0 release should be built around the following principles.
 
 ## Relationship to HiC-Nap
 
-HiC-Nap is currently a separate restartable chunk-based preprocessing prototype. Its design is directly relevant to the future of `microC-pipeline`.
+HiC-Nap is currently a separate restartable chunk-based preprocessing prototype. Its design is directly relevant to the future of `Wulf3C`.
 
 Planned direction:
 
 ```text
 HiC-Nap = restartable chunk-processing prototype / engine
-microC-pipeline = final integrated production-facing project
+Wulf3C = final integrated production-facing project
 ```
 
-Key HiC-Nap concepts to bring into `microC-pipeline`:
+Key HiC-Nap concepts to bring into `Wulf3C`:
 
 - FASTQ chunking for large datasets
 - Per-chunk status tracking
@@ -101,7 +101,7 @@ Planned or completed tasks:
 Expected status after this milestone:
 
 ```text
-microC-pipeline is public-safe and useful as a documented legacy Slurm script.
+Wulf3C is public-safe and useful as a documented legacy Slurm script.
 ```
 
 ## Milestone v0.3.0: project structure and identity
@@ -121,7 +121,7 @@ Completed project structure and identity tasks:
 
 Remaining or future tasks, not completed in this milestone:
 
-- [ ] Add a modern executable entrypoint, for example `bin/microc-pipeline`.
+- [ ] Add a modern executable entrypoint, for example `bin/wulf3c`.
 - [ ] Define GitHub repository topics and description.
 - [ ] Make a final production engine choice if project ownership gives that direction.
 - [ ] Implement the modern pipeline engine.
@@ -140,7 +140,7 @@ Goal: remove hard-coded sample naming and path assumptions for one Micro-C sampl
 
 Completed tasks:
 
-- [x] Add the `bin/microc-pipeline` executable entrypoint.
+- [x] Add the `bin/wulf3c` executable entrypoint.
 - [x] Add a single-sample YAML config format.
 - [x] Add `config/example.single-sample.yaml` without restriction enzyme settings.
 - [x] Add support for explicit `fastq.r1` and `fastq.r2` paths.
@@ -411,4 +411,4 @@ The project should grow in two layers:
    - sensible examples
    - documentation that makes the pipeline useful to other researchers
 
-The immediate next step after v0.1.1 is to preserve the cleaned legacy script while designing the modern engine. The most valuable future work is to bring the restartable chunk-processing model from HiC-Nap into `microC-pipeline` and make it the foundation of v1.0.0.
+The immediate next step after v0.1.1 is to preserve the cleaned legacy script while designing the modern engine. The most valuable future work is to bring the restartable chunk-processing model from HiC-Nap into `Wulf3C` and make it the foundation of v1.0.0.
