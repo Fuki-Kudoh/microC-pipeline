@@ -121,7 +121,7 @@ Completed project structure and identity tasks:
 
 Remaining or future tasks, not completed in this milestone:
 
-- [ ] Add a modern executable entrypoint, for example `bin/microc-pipeline`.
+- [ ] Add a modern executable entrypoint, for example `bin/wulf3c`.
 - [ ] Define GitHub repository topics and description.
 - [ ] Make a final production engine choice if project ownership gives that direction.
 - [ ] Implement the modern pipeline engine.
@@ -140,7 +140,7 @@ Goal: remove hard-coded sample naming and path assumptions for one Micro-C sampl
 
 Completed tasks:
 
-- [x] Add the `bin/microc-pipeline` executable entrypoint.
+- [x] Add the `bin/wulf3c` executable entrypoint.
 - [x] Add a single-sample YAML config format.
 - [x] Add `config/example.single-sample.yaml` without restriction enzyme settings.
 - [x] Add support for explicit `fastq.r1` and `fastq.r2` paths.

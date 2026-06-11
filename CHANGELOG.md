@@ -10,10 +10,12 @@ All notable changes to this project will be documented in this file.
 - Added best-effort command-line tool version collection to `run_metadata.json`.
 
 ### Changed
+- Renamed the preferred public CLI command from `bin/microc-pipeline` to `bin/wulf3c`; the old command remains as a deprecated compatibility wrapper.
 - Removed an unreachable FASTA directory guard and cleaned up minor import placement.
 - Updated documentation for v0.5.1 preflight and reproducibility behavior.
 
 ### Notes
+- The `assay: microc` configuration value and standardized output contract are unchanged by the Wulf3C command rename.
 - This hardening release does not add restartable chunking, multi-sample support, full QC reports, or changes to the core processing command sequence.
 
 ## v0.5.0 - 2026-06-08
@@ -25,7 +27,7 @@ All notable changes to this project will be documented in this file.
 - Added `SAMPLE.pairtools.stats.txt`, `SAMPLE.preseq.lc_extrap.txt`, and `SAMPLE.qc.tsv` final stats/QC paths.
 - Added lightweight output validation for required final products.
 - Added `output_manifest.json` to record expected outputs and validation status.
-- Added `bin/microc-pipeline validate-outputs` for checking completed runs without rerunning preprocessing.
+- Added `bin/wulf3c validate-outputs` for checking completed runs without rerunning preprocessing.
 - Added `get_qc.py --format tsv` while preserving the default text output.
 
 ### Changed
@@ -39,7 +41,7 @@ All notable changes to this project will be documented in this file.
 ## v0.4.0 - 2026-06-08
 
 ### Added
-- Added a config-driven single-sample Micro-C runner at `bin/microc-pipeline`.
+- Added a config-driven single-sample Micro-C runner at `bin/wulf3c`.
 - Added `config/example.single-sample.yaml` as an example single-sample YAML config without restriction enzyme settings.
 - Added config validation for required fields, value types, unsupported assay values, and missing input files.
 - Added dry-run mode to print planned commands without running external tools.
