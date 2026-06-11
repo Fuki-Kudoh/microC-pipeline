@@ -1,4 +1,4 @@
-# microC-pipeline
+# Wulf3C
 <p align="center">
   <img src="assets/Wulf3C_logo.png" alt="Wulf3C logo" width="500">
 </p>
