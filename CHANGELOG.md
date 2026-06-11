@@ -10,10 +10,12 @@ All notable changes to this project will be documented in this file.
 - Added best-effort command-line tool version collection to `run_metadata.json`.
 
 ### Changed
+- Renamed the preferred public CLI command from `bin/microc-pipeline` to `bin/wulf3c`; the old command remains as a deprecated compatibility wrapper.
 - Removed an unreachable FASTA directory guard and cleaned up minor import placement.
 - Updated documentation for v0.5.1 preflight and reproducibility behavior.
 
 ### Notes
+- The `assay: microc` configuration value and standardized output contract are unchanged by the Wulf3C command rename.
 - This hardening release does not add restartable chunking, multi-sample support, full QC reports, or changes to the core processing command sequence.
 
 ## v0.5.0 - 2026-06-08

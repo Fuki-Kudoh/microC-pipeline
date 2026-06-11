@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deprecated compatibility wrapper for the Wulf3C CLI."""
+"""Command-line entrypoint for the Wulf3C runner."""
 
 import sys
 from pathlib import Path

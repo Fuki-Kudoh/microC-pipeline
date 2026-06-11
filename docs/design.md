@@ -2,10 +2,10 @@
 
 ## Current design
 
-`microC-pipeline` currently has two interfaces:
+`Wulf3C` currently has two interfaces:
 
 1. A retained legacy Slurm script, `mdp.sh`, kept for backward compatibility.
-2. A lightweight config-driven single-sample runner, `bin/microc-pipeline`, for modernized Micro-C preprocessing.
+2. A lightweight config-driven single-sample runner, `bin/wulf3c`, for modernized Micro-C preprocessing.
 
 The v0.5.0 milestone keeps the v0.4.0 single-sample runner model and makes final valid pairs, matrix, stats, QC, and manifest files first-class products. The v0.5.1 hardening milestone preserves that output behavior while adding safe sample-name validation, BWA index preflight checks for `validate-config` and `run`, and best-effort tool-version metadata for real runs.
 
