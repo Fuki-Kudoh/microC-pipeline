@@ -1,6 +1,10 @@
 # microC-pipeline
+<p align="center">
+  <img src="assets/Wulf3C_logo.png" alt="Wulf3C logo" width="500">
+</p>
 
-`microC-pipeline` is a Micro-C preprocessing repository. The v0.5.1 development milestone keeps the v0.5.0 output behavior and adds lightweight preflight and reproducibility hardening to the config-driven single-sample runner.
+
+`Wulf3C` is a Micro-C preprocessing repository. The v0.5.1 development milestone keeps the v0.5.0 output behavior and adds lightweight preflight and reproducibility hardening to the config-driven single-sample runner.
 
 The preferred interface is:
 
